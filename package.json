@@ -1,0 +1,13 @@
+{
+  "name": "skilllearn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SkillLearn - Short-form skill learning platform",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "backend:seed": "cd backend && npm run seed",
+    "mobile": "cd mobile && npx expo start",
+    "admin": "cd admin && npm run dev",
+    "install:all": "cd backend && npm install && cd ../mobile && npm install && cd ../admin && npm install"
+  }
+}

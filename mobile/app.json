@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "SkillLearn",
+    "slug": "skilllearn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "skilllearn",
+    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f0f"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.skilllearn.app"
+    },
+    "android": {
+      "package": "com.skilllearn.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      },
+      "apiUrl": "http://localhost:5000/api"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}
