@@ -5,6 +5,7 @@ import { getColors, darkColors } from '../utils/constants';
 const ThemeContext = createContext({
   isDark: defaultSettings.darkMode,
   colors: darkColors,
+  isLoading: false,
   toggleTheme: () => {},
 });
 
@@ -16,6 +17,7 @@ export const useTheme = () => {
     return {
       isDark: defaultSettings.darkMode,
       colors: darkColors,
+      isLoading: false,
       toggleTheme: () => {},
     };
   }
@@ -24,7 +26,7 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(defaultSettings.darkMode);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -35,7 +37,7 @@ export const ThemeProvider = ({ children }) => {
         console.error('Error loading theme:', error);
         setIsDark(defaultSettings.darkMode);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     loadTheme();
@@ -57,6 +59,7 @@ export const ThemeProvider = ({ children }) => {
   const value = {
     isDark,
     colors,
+    isLoading,
     toggleTheme,
   };
 

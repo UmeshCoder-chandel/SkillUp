@@ -317,12 +317,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  appBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
   leaderMe: { borderColor: COLORS.primary },
   leaderRank: { color: COLORS.textSecondary, fontWeight: '700', width: 28 },
   leaderAvatar: { width: 36, height: 36, borderRadius: 18 },

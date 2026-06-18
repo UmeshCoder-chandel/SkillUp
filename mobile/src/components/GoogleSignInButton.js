@@ -15,6 +15,7 @@ export default function GoogleSignInButton({ loading }) {
   const dispatch = useDispatch();
   const [request, response, promptAsync] = useGoogleAuthRequest();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [sessionActive, setSessionActive] = useState(false);
   const configured = isGoogleAuthConfigured();
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function GoogleSignInButton({ loading }) {
         dispatch(setAuthError(typeof err === 'string' ? err : err.message || 'Google sign-in failed'));
       } finally {
         setGoogleLoading(false);
+        setSessionActive(false);
       }
     })();
   }, [dispatch, response]);
@@ -40,8 +42,16 @@ export default function GoogleSignInButton({ loading }) {
       return;
     }
 
+    if (sessionActive || googleLoading || loading) return;
+
     dispatch(clearError());
-    await promptAsync();
+    setSessionActive(true);
+    try {
+      await promptAsync();
+    } catch (err) {
+      console.warn('Google auth prompt error:', err);
+      setSessionActive(false);
+    }
   };
 
   return (

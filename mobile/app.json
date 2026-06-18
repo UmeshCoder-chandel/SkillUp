@@ -22,15 +22,17 @@
       "package": "com.skilllearn.app"
     },
     "extra": {
+      "apiUrl": "https://skillup-dwny.onrender.com/api",
       "eas": {
-        "projectId": "your-eas-project-id"
-      },
-      "apiUrl": "http://localhost:5000/api"
+        "projectId": "05dad788-e2ca-4225-bfc1-b88ac1eb82a3"
+      }
     },
     "plugins": [
       "expo-secure-store",
       "expo-asset",
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "owner": "chandelumesh322"
   }
 }
