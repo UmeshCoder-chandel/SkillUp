@@ -120,6 +120,7 @@ export default function EditProfileScreen({ navigation }) {
       }
 
       await api.put('/users/profile', formData, {
+        timeout: 120000,
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total > 0) {
             setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));

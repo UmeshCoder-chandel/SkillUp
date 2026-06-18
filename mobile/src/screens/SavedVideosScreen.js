@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import api from '../services/api';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SavedVideosScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,31 +40,31 @@ export default function SavedVideosScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Saved Videos</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Saved Videos</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={styles.center}>
-            <Text style={styles.emptyText}>Loading...</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Loading...</Text>
           </View>
         ) : videos.length === 0 ? (
           <View style={styles.center}>
-            <Ionicons name="bookmark-outline" size={64} color={COLORS.textSecondary} />
-            <Text style={styles.emptyText}>No saved videos yet</Text>
+            <Ionicons name="bookmark-outline" size={64} color={colors.textSecondary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No saved videos yet</Text>
           </View>
         ) : (
           videos.map((video) => (
             <TouchableOpacity
               key={video._id}
-              style={styles.videoCard}
-              onPress={() => console.log('Video pressed:', video._id)}
+              style={[styles.videoCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => navigation.navigate('Watch', { videos, videoId: video._id })}
             >
               <View style={styles.thumbnailContainer}>
                 <Image source={{ uri: video.thumbnail }} style={styles.thumbnail} />
@@ -72,8 +73,8 @@ export default function SavedVideosScreen() {
                 </View>
               </View>
               <View style={styles.videoInfo}>
-                <Text style={styles.videoTitle} numberOfLines={2}>{video.title}</Text>
-                <Text style={styles.videoMeta}>
+                <Text style={[styles.videoTitle, { color: colors.text }]} numberOfLines={2}>{video.title}</Text>
+                <Text style={[styles.videoMeta, { color: colors.textSecondary }]}>
                   {video.creator?.displayName} • {formatViews(video.views)} views
                 </Text>
               </View>
@@ -87,7 +88,7 @@ export default function SavedVideosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -96,17 +97,15 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   backButton: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
+  headerTitle: { fontSize: 22, fontWeight: '800' },
   scroll: { paddingHorizontal: 20, paddingTop: 20 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textSecondary, fontSize: 16, marginTop: 16, textAlign: 'center' },
+  emptyText: { fontSize: 16, marginTop: 16, textAlign: 'center' },
   videoCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
     overflow: 'hidden',
   },
   thumbnailContainer: { position: 'relative', width: 140, height: 90 },
@@ -122,6 +121,6 @@ const styles = StyleSheet.create({
   },
   durationText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   videoInfo: { flex: 1, padding: 12, justifyContent: 'center' },
-  videoTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 6, lineHeight: 20 },
-  videoMeta: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '500' },
+  videoTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6, lineHeight: 20 },
+  videoMeta: { fontSize: 12, fontWeight: '500' },
 });

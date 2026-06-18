@@ -58,26 +58,11 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = parseInt(process.env.PORT, 10) || 5000;
-const RESTART_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
-const startServer = async () => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SkillLearn API running on port ${PORT}`);
-    console.log(`Health: http://localhost:${PORT}/api/health`);
-    
-    // Periodic server restart (every 10 minutes)
-    setInterval(() => {
-      console.log('⏰ Scheduled server restart in 5 seconds...');
-      setTimeout(() => {
-        console.log('🔄 Restarting server...');
-        process.exit(0); // Nodemon or PM2 will restart it
-      }, 5000);
-    }, RESTART_INTERVAL_MS);
-    
-    console.log(`⏱️  Server will auto-restart every 10 minutes`);
-  });
-};
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 SkillLearn API running on port ${PORT}`);
+  console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
 
-startServer();
- 
 module.exports = app;

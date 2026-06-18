@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, memo } from 'react';
+import React, { useRef, useState, useCallback, memo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Video } from 'expo-av';
 import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { formatCount } from '../utils/constants';
@@ -92,7 +93,7 @@ const HashtagList = memo(({ category, colors }) => {
 });
 
 // Extracted Component: ActionButtons
-const ActionButtons = memo(({ item, saved, onLike, onSave, onShare, colors, isDark }) => {
+const ActionButtons = memo(({ item, saved, commentCount, onLike, onSave, onShare, onComment, colors, isDark }) => {
   const likeCount = item.likeCount || item.likes?.length || 0;
 
   return (
@@ -119,9 +120,12 @@ const ActionButtons = memo(({ item, saved, onLike, onSave, onShare, colors, isDa
         style={styles.actionBtn} 
         activeOpacity={0.7}
         accessibilityLabel="View comments"
+        onPress={onComment}
       >
         <Ionicons name="chatbubble-outline" size={30} color="#fff" />
-        <Text style={[styles.actionText, { color: '#fff' }]}>1.2k</Text>
+        <Text style={[styles.actionText, { color: '#fff' }]}>
+          {formatCount(commentCount)}
+        </Text>
       </TouchableOpacity>
 
       {/* Save */}
@@ -154,11 +158,13 @@ const ActionButtons = memo(({ item, saved, onLike, onSave, onShare, colors, isDa
 const VideoItem = memo(({ item, isActive, onFollow }) => {
   const { colors, isDark } = useTheme();
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const videoRef = useRef(null);
   const [status, setStatus] = useState({});
   const [saved, setSaved] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [doubleTapTimer, setDoubleTapTimer] = useState(null);
+  const [commentCount, setCommentCount] = useState(0);
 
   React.useEffect(() => {
     setStatus(prev => ({ ...prev, shouldPlay: isActive }));
@@ -166,6 +172,14 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
       api.post('/users/watch-history', { videoId: item._id, progress: 0 }).catch(() => {});
     }
   }, [isActive, item._id]);
+
+  useEffect(() => {
+    api.get(`/videos/${item._id}/comments`).then(({ data }) => {
+      if (data.pagination?.total !== undefined) {
+        setCommentCount(data.pagination.total);
+      }
+    }).catch(() => {});
+  }, [item._id]);
 
   const handleLike = () => dispatch(likeVideo(item._id));
   
@@ -181,6 +195,10 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
     } catch {
       await Share.share({ message: item.title });
     }
+  };
+
+  const handleComment = () => {
+    navigation.navigate('Comments', { videoId: item._id });
   };
 
   const togglePlay = async () => {
@@ -276,9 +294,11 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
         <ActionButtons 
           item={item} 
           saved={saved}
+          commentCount={commentCount}
           onLike={handleLike}
           onSave={handleSave}
           onShare={handleShare}
+          onComment={handleComment}
           colors={colors}
           isDark={isDark}
         />

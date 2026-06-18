@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import api from '../services/api';
 import VideoFeed from '../components/VideoFeed';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CategoryVideosScreen({ route }) {
   const { category } = route.params;
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
   useEffect(() => {
     api.get(`/videos/category/${category._id}`)
@@ -17,8 +18,8 @@ export default function CategoryVideosScreen({ route }) {
 
   if (loading) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -27,5 +28,5 @@ export default function CategoryVideosScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

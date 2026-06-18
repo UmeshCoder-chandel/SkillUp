@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Box, Paper, TextField, Button, Typography, Alert } from '@mui/material';
+import { Box, Paper, TextField, Button, Typography, Alert, IconButton, InputAdornment } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { adminLogin } from '../store/authSlice';
 
 export default function LoginPage() {
@@ -10,6 +12,7 @@ export default function LoginPage() {
   const { loading, error, isAuthenticated } = useSelector((s) => s.auth);
   const [email, setEmail] = useState('admin@skilllearn.com');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) navigate('/');
@@ -28,7 +31,23 @@ export default function LoginPage() {
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <form onSubmit={handleSubmit}>
           <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" />
-          <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" />
+          <TextField 
+            fullWidth 
+            label="Password" 
+            type={showPassword ? "text" : "password"} 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
           <Button fullWidth type="submit" variant="contained" disabled={loading} sx={{ mt: 2, bgcolor: '#6C63FF' }}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>

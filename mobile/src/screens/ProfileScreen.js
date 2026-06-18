@@ -14,11 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 import { logoutUser } from '../store/authSlice';
 import api from '../services/api';
 import { Button } from '../components/UI';
-import { COLORS, BADGES } from '../utils/constants';
+import { BADGES } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const { user } = useSelector((s) => s.auth);
   const [profile, setProfile] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -38,7 +40,7 @@ export default function ProfileScreen() {
       list.push({
         rank: list.length + 1,
         name: user?.name || 'You',
-        xp: 0,
+        xp: profile?.user?.xp || 0,
         avatar: user?.avatar,
         isMe: true,
       });
@@ -52,12 +54,15 @@ export default function ProfileScreen() {
         setCreator(found || null);
       })
       .catch(() => {});
-  }, [user?.name, user?.avatar, user?._id]);
+  }, [user?.name, user?.avatar, user?._id, profile]);
 
   const savedCount = profile?.user?.savedVideos?.length || 0;
   const topicsCount = profile?.playlists?.length || 0;
   const isCreator = creator || user?.role === 'creator';
   const hasPendingRequest = profile?.user?.creatorRequest?.status === 'pending';
+  const dayStreak = profile?.user?.dayStreak || 0;
+  const xp = profile?.user?.xp || 0;
+  const userBadges = profile?.user?.badges || [];
 
   const becomeCreator = async () => {
     setRequestingCreator(true);
@@ -78,7 +83,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.appBar}>
           <View />
@@ -93,19 +98,19 @@ export default function ProfileScreen() {
               }
             }}
           >
-            <Ionicons name="settings-outline" size={24} color={COLORS.text} />
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
         <View style={styles.header}>
           {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            <Image source={{ uri: user.avatar }} style={[styles.avatar, { borderColor: colors.primary }]} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+              <Text style={[styles.avatarText, { color: colors.text }]}>{user?.name?.[0]?.toUpperCase()}</Text>
             </View>
           )}
-          <Text style={styles.name}>{user?.name}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{user?.name}</Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
         </View>
 
         {isCreator ? (
@@ -116,9 +121,9 @@ export default function ProfileScreen() {
             style={styles.uploadButton}
           />
         ) : hasPendingRequest ? (
-          <View style={styles.pendingRequestContainer}>
-            <Ionicons name="time-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.pendingRequestText}>Creator request pending approval</Text>
+          <View style={[styles.pendingRequestContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="time-outline" size={20} color={colors.primary} />
+            <Text style={[styles.pendingRequestText, { color: colors.primary }]}>Creator request pending approval</Text>
           </View>
         ) : (
           <Button
@@ -126,34 +131,34 @@ export default function ProfileScreen() {
             onPress={becomeCreator}
             loading={requestingCreator}
             variant="outline"
-            icon={<Ionicons name="create-outline" size={18} color={COLORS.primary} />}
+            icon={<Ionicons name="create-outline" size={18} color={colors.primary} />}
             style={styles.becomeButton}
           />
         )}
 
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Ionicons name="flame" size={22} color={COLORS.streak} />
-            <Text style={styles.statNum}>0</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="flame" size={22} color={colors.streak} />
+            <Text style={[styles.statNum, { color: colors.text }]}>{dayStreak}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Day Streak</Text>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="flash" size={22} color={COLORS.xp} />
-            <Text style={styles.statNum}>{savedCount * 10}</Text>
-            <Text style={styles.statLabel}>XP</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="flash" size={22} color={colors.xp} />
+            <Text style={[styles.statNum, { color: colors.text }]}>{xp}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>XP</Text>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="ribbon-outline" size={22} color={COLORS.success} />
-            <Text style={styles.statNum}>{topicsCount}</Text>
-            <Text style={styles.statLabel}>Topics</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="ribbon-outline" size={22} color={colors.success} />
+            <Text style={[styles.statNum, { color: colors.text }]}>{topicsCount}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Topics</Text>
           </View>
         </View>
 
-        <View style={styles.menuSection}>
+        <View style={[styles.menuSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => {
                 const parentNav = navigation.getParent ? navigation.getParent() : null;
                 if (parentNav && typeof parentNav.navigate === 'function') {
@@ -163,42 +168,45 @@ export default function ProfileScreen() {
                 }
               }}
             >
-              <View style={styles.menuIcon}>
-                <Ionicons name={item.icon} size={20} color={COLORS.text} />
+              <View style={[styles.menuIcon, { backgroundColor: colors.surface }]}>
+                <Ionicons name={item.icon} size={20} color={colors.text} />
               </View>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Badges</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Badges</Text>
         <View style={styles.badgesGrid}>
-          {BADGES.map((badge) => (
-            <View key={badge.id} style={styles.badge}>
-              <View style={styles.badgeIcon}>
-                <Ionicons name={badge.icon} size={24} color={COLORS.textSecondary} />
+          {BADGES.map((badge) => {
+            const earned = userBadges.includes(badge.id);
+            return (
+              <View key={badge.id} style={[styles.badge, { backgroundColor: colors.card, borderColor: colors.border, opacity: earned ? 1 : 0.5 }]}>
+                <View style={[styles.badgeIcon, { backgroundColor: colors.surface }]}>
+                  <Ionicons name={badge.icon} size={24} color={earned ? colors.primary : colors.textSecondary} />
+                </View>
+                <Text style={[styles.badgeLabel, { color: earned ? colors.text : colors.textSecondary }]}>{badge.label}</Text>
               </View>
-              <Text style={styles.badgeLabel}>{badge.label}</Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
-        <Text style={styles.sectionTitle}>Leaderboard</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Leaderboard</Text>
         {leaderboard.map((entry) => (
-          <View key={`${entry.rank}-${entry.name}`} style={[styles.leaderRow, entry.isMe && styles.leaderMe]}>
-            <Text style={styles.leaderRank}>#{entry.rank}</Text>
+          <View key={`${entry.rank}-${entry.name}`} style={[styles.leaderRow, { backgroundColor: colors.card, borderColor: colors.border }, entry.isMe && { borderColor: colors.primary }]}>
+            <Text style={[styles.leaderRank, { color: colors.textSecondary }]}>#{entry.rank}</Text>
             {entry.avatar ? (
               <Image source={{ uri: entry.avatar }} style={styles.leaderAvatar} />
             ) : (
-              <View style={styles.leaderAvatarPlaceholder}>
-                <Text style={styles.leaderAvatarText}>{entry.name[0]}</Text>
+              <View style={[styles.leaderAvatarPlaceholder, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.leaderAvatarText, { color: colors.text }]}>{entry.name[0]}</Text>
               </View>
             )}
-            <Text style={styles.leaderName} numberOfLines={1}>{entry.name}</Text>
+            <Text style={[styles.leaderName, { color: colors.text }]} numberOfLines={1}>{entry.name}</Text>
             <View style={styles.leaderXp}>
-              <Ionicons name="flash" size={14} color={COLORS.xp} />
-              <Text style={styles.leaderXpText}>{entry.xp}</Text>
+              <Ionicons name="flash" size={14} color={colors.xp} />
+              <Text style={[styles.leaderXpText, { color: colors.text }]}>{entry.xp}</Text>
             </View>
           </View>
         ))}
@@ -207,7 +215,7 @@ export default function ProfileScreen() {
           title="Log out"
           onPress={() => dispatch(logoutUser())}
           variant="outline"
-          icon={<Ionicons name="log-out-outline" size={18} color={COLORS.primary} />}
+          icon={<Ionicons name="log-out-outline" size={18} color={colors.primary} />}
           style={styles.logout}
         />
         <View style={{ height: 32 }} />
@@ -217,7 +225,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   scroll: { paddingHorizontal: 20 },
   header: { alignItems: 'center', paddingTop: 16, paddingBottom: 24 },
   avatar: {
@@ -225,55 +233,45 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     borderWidth: 3,
-    borderColor: COLORS.primary,
   },
   avatarPlaceholder: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: COLORS.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: COLORS.primary,
   },
-  avatarText: { color: COLORS.text, fontSize: 36, fontWeight: '800' },
-  name: { color: COLORS.text, fontSize: 24, fontWeight: '800', marginTop: 14 },
-  email: { color: COLORS.textSecondary, fontSize: 14, marginTop: 4 },
+  avatarText: { fontSize: 36, fontWeight: '800' },
+  name: { fontSize: 24, fontWeight: '800', marginTop: 14 },
+  email: { fontSize: 14, marginTop: 4 },
   pendingRequestContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: COLORS.border,
     gap: 10,
   },
   pendingRequestText: {
-    color: COLORS.primary,
     fontSize: 14,
     fontWeight: '700',
   },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
   statCard: {
     flex: 1,
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  statNum: { color: COLORS.text, fontSize: 22, fontWeight: '800', marginTop: 6 },
-  statLabel: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2, textAlign: 'center' },
+  statNum: { fontSize: 22, fontWeight: '800', marginTop: 6 },
+  statLabel: { fontSize: 11, marginTop: 2, textAlign: 'center' },
   menuSection: {
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 28,
     overflow: 'hidden',
   },
@@ -283,19 +281,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   menuIcon: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  menuLabel: { flex: 1, color: COLORS.text, fontSize: 15, fontWeight: '600' },
-  sectionTitle: { color: COLORS.text, fontSize: 22, fontWeight: '800', marginBottom: 14 },
+  menuLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
+  sectionTitle: { fontSize: 22, fontWeight: '800', marginBottom: 14 },
   badgesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -304,49 +300,42 @@ const styles = StyleSheet.create({
   },
   badge: {
     width: '31%',
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   badgeIcon: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
-  badgeLabel: { color: COLORS.textSecondary, fontSize: 11, textAlign: 'center', fontWeight: '600' },
+  badgeLabel: { fontSize: 11, textAlign: 'center', fontWeight: '600' },
   leaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: COLORS.border,
     gap: 12,
   },
-  leaderMe: { borderColor: COLORS.primary },
-  leaderRank: { color: COLORS.textSecondary, fontWeight: '700', width: 28 },
+  leaderRank: { fontWeight: '700', width: 28 },
   leaderAvatar: { width: 36, height: 36, borderRadius: 18 },
   leaderAvatarPlaceholder: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  leaderAvatarText: { color: COLORS.text, fontWeight: '700' },
-  leaderName: { flex: 1, color: COLORS.text, fontWeight: '600', fontSize: 15 },
+  leaderAvatarText: { fontWeight: '700' },
+  leaderName: { flex: 1, fontWeight: '600', fontSize: 15 },
   leaderXp: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  leaderXpText: { color: COLORS.text, fontWeight: '700' },
+  leaderXpText: { fontWeight: '700' },
   appBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

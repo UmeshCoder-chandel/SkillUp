@@ -29,6 +29,7 @@ import AboutDetailScreen from '../screens/AboutDetailScreen';
 import WatchScreen from '../screens/WatchScreen';
 import UploadVideoScreen from '../screens/UploadVideoScreen';
 import MentorScreen from '../screens/MentorScreen';
+import CommentsScreen from '../screens/CommentsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -117,6 +118,7 @@ export default function AppNavigator() {
             <Stack.Screen name="HelpDetail" component={HelpDetailScreen} />
             <Stack.Screen name="AboutDetail" component={AboutDetailScreen} />
             <Stack.Screen name="Watch" component={WatchScreen} />
+            <Stack.Screen name="Comments" component={CommentsScreen} />
             <Stack.Screen name="UploadVideo" component={UploadVideoScreen} />
           </>
         )}

@@ -6,10 +6,10 @@
     "orientation": "portrait",
     "scheme": "skilllearn",
     "newArchEnabled": true,
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#0f0f0f"
+      "backgroundColor": "#F8FAFC"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,7 +19,11 @@
       "bundleIdentifier": "com.skilllearn.app"
     },
     "android": {
-      "package": "com.skilllearn.app"
+      "package": "com.skilllearn.app",
+      "splash": {
+        "resizeMode": "contain",
+        "backgroundColor": "#F8FAFC"
+      }
     },
     "extra": {
       "apiUrl": "https://skillup-dwny.onrender.com/api",

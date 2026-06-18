@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 120000, // 2 minutes for video uploads
+  timeout: 20000, // 20 seconds for normal API requests
 });
 
 api.interceptors.request.use(async (config) => {

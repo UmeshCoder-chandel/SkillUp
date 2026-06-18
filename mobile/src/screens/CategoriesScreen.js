@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCategories } from '../store/categorySlice';
-import { COLORS } from '../utils/constants';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const categoryIcons = {
   'Web Development': 'globe-outline',
@@ -21,6 +22,7 @@ const categoryIcons = {
 
 export default function CategoriesScreen({ navigation }) {
   const dispatch = useDispatch();
+  const { colors } = useTheme();
   const { list, loading } = useSelector((s) => s.categories);
 
   useEffect(() => {
@@ -28,8 +30,8 @@ export default function CategoriesScreen({ navigation }) {
   }, [dispatch]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Skill Categories</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <Text style={[styles.header, { color: colors.text }]}>Skill Categories</Text>
       <FlatList
         data={list}
         keyExtractor={(item) => item._id}
@@ -37,26 +39,25 @@ export default function CategoriesScreen({ navigation }) {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: colors.surface }]}
             onPress={() => navigation.navigate('CategoryVideos', { category: item })}
           >
-            <Ionicons name={categoryIcons[item.title] || 'book-outline'} size={32} color={COLORS.primary} />
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.count}>{item.videoCount || 0} videos</Text>
+            <Ionicons name={categoryIcons[item.title] || 'book-outline'} size={32} color={colors.primary} />
+            <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+            <Text style={[styles.count, { color: colors.textSecondary }]}>{item.videoCount || 0} videos</Text>
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: { fontSize: 24, fontWeight: '700', color: COLORS.text, padding: 16, paddingTop: 50 },
+  container: { flex: 1 },
+  header: { fontSize: 24, fontWeight: '700', padding: 16, paddingTop: 16 },
   list: { padding: 8 },
   card: {
     flex: 1,
-    backgroundColor: COLORS.surface,
     margin: 8,
     padding: 20,
     borderRadius: 16,
@@ -64,6 +65,6 @@ const styles = StyleSheet.create({
     minHeight: 140,
     justifyContent: 'center',
   },
-  title: { color: COLORS.text, fontWeight: '600', marginTop: 10, textAlign: 'center' },
-  count: { color: COLORS.textSecondary, fontSize: 12, marginTop: 4 },
+  title: { fontWeight: '600', marginTop: 10, textAlign: 'center' },
+  count: { fontSize: 12, marginTop: 4 },
 });

@@ -5,11 +5,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import { ScreenHeader, EmptyState } from '../components/UI';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SavedScreen({ navigation }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
   const loadSaved = useCallback(async () => {
     try {
@@ -29,7 +30,7 @@ export default function SavedScreen({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScreenHeader title="Saved" subtitle="Your bookmarked lessons" />
 
       {videos.length === 0 && !loading ? (
@@ -44,7 +45,7 @@ export default function SavedScreen({ navigation }) {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={loadSaved} tintColor={COLORS.primary} />
+            <RefreshControl refreshing={loading} onRefresh={loadSaved} tintColor={colors.primary} />
           }
           renderItem={({ item }) => (
             <CourseCard
@@ -59,6 +60,6 @@ export default function SavedScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   list: { paddingHorizontal: 20, paddingBottom: 24 },
 });

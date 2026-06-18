@@ -97,6 +97,7 @@ export default function UploadVideoScreen({ navigation }) {
       });
 
       await api.post('/creators/videos', formData, {
+        timeout: 180000,
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total > 0) {
             setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));

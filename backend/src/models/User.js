@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
       },
     ],
     savedVideos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }],
+    dayStreak: { type: Number, default: 0 },
+    lastWatchDate: { type: Date },
+    xp: { type: Number, default: 0 },
+    badges: [{ type: String }],
   },
   { timestamps: true }
 );
@@ -55,6 +59,9 @@ userSchema.methods.toPublicJSON = function () {
     isVerified: this.isVerified,
     creatorRequest: this.creatorRequest,
     createdAt: this.createdAt,
+    dayStreak: this.dayStreak,
+    xp: this.xp,
+    badges: this.badges,
   };
 };
 

@@ -5,12 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import { ScreenHeader } from '../components/UI';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SearchScreen({ navigation }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (query.length < 2) {
@@ -31,15 +32,15 @@ export default function SearchScreen({ navigation }) {
   }, [query]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScreenHeader title="Search" />
 
-      <View style={styles.searchWrap}>
-        <Ionicons name="search" size={20} color={COLORS.textSecondary} />
+      <View style={[styles.searchWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Try 'React', 'Figma', 'AI'..."
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           value={query}
           onChangeText={setQuery}
         />
@@ -68,23 +69,20 @@ export default function SearchScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
     marginHorizontal: 20,
     marginBottom: 16,
     paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    color: COLORS.text,
     fontSize: 16,
   },
   list: { paddingHorizontal: 20, paddingBottom: 24 },

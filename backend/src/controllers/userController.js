@@ -68,13 +68,60 @@ exports.addWatchHistory = asyncHandler(async (req, res) => {
   const { videoId, progress } = req.body;
   const user = await User.findById(req.user._id);
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const lastWatch = user.lastWatchDate ? new Date(user.lastWatchDate) : null;
+  lastWatch?.setHours(0, 0, 0, 0);
+
+  // Update streak
+  if (!lastWatch || lastWatch < yesterday) {
+    // First watch ever or missed a day
+    user.dayStreak = 1;
+  } else if (lastWatch.getTime() === yesterday.getTime()) {
+    // Yesterday was last watch, increment streak
+    user.dayStreak += 1;
+  }
+  // If last watch was today, do nothing to streak
+
+  user.lastWatchDate = new Date();
+
+  // Add XP: 10 XP per video watch
   const existing = user.watchHistory.find((h) => h.video.toString() === videoId);
+  if (!existing) {
+    user.xp += 10;
+  }
+
+  // Update watch history
   if (existing) {
     existing.watchedAt = new Date();
     existing.progress = progress || existing.progress;
   } else {
     user.watchHistory.unshift({ video: videoId, progress: progress || 0 });
     if (user.watchHistory.length > 100) user.watchHistory.pop();
+  }
+
+  // Check for badges
+  if (user.watchHistory.length <= 1 && !user.badges.includes('first')) {
+    user.badges.push('first');
+  }
+  if (user.dayStreak >= 3 && !user.badges.includes('streak3')) {
+    user.badges.push('streak3');
+  }
+  if (user.dayStreak >= 7 && !user.badges.includes('streak7')) {
+    user.badges.push('streak7');
+  }
+  if (user.dayStreak >= 30 && !user.badges.includes('streak30')) {
+    user.badges.push('streak30');
+  }
+  if (user.xp >= 100 && !user.badges.includes('xp100')) {
+    user.badges.push('xp100');
+  }
+  if (user.xp >= 500 && !user.badges.includes('xp500')) {
+    user.badges.push('xp500');
   }
 
   await user.save();

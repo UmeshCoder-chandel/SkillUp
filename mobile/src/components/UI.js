@@ -70,8 +70,9 @@ export const Button = ({
   );
 };
 
-export const IconInput = ({ icon, style, ...props }) => {
+export const IconInput = ({ icon, style, secureTextEntry, ...props }) => {
   const { colors } = useTheme();
+  const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
   return (
     <View style={[styles.iconInputWrap, { backgroundColor: colors.card, borderColor: colors.border }, style]}>
@@ -79,8 +80,18 @@ export const IconInput = ({ icon, style, ...props }) => {
       <TextInput
         style={[styles.iconInput, { color: colors.text }]}
         placeholderTextColor={colors.textSecondary}
+        secureTextEntry={secureTextEntry && !isPasswordVisible}
         {...props}
       />
+      {secureTextEntry && (
+        <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+          <Ionicons
+            name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+            size={20}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
