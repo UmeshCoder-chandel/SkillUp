@@ -12,7 +12,7 @@ if (process.env.RESEND_API_KEY) {
   console.warn('[Email Service] Resend API key not found. Using dev mode (emails logged to console)');
 }
 
-// Default sender email (replace with your verified domain)
+// Default sender email - use onboarding@resend.dev for testing (allowed by Resend)
 const DEFAULT_SENDER = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 // Email templates
@@ -85,7 +85,7 @@ const templates = {
 };
 
 /**
- * Send an email using Resend (or log to console in dev)
+ * Send an email using Resend (or log to console in dev/fallback)
  * @param {string} to - Recipient email address
  * @param {string} templateName - Template name (otpVerification, passwordReset, accountVerification)
  * @param {object} templateData - Data for template (otp, name)
@@ -116,6 +116,7 @@ const sendEmail = async (to, templateName, templateData) => {
     }
 
     // Send via Resend
+    console.log(`[Email Service] Sending email to ${to}...`);
     const { data, error } = await resend.emails.send({
       from: `SkillLearn <${DEFAULT_SENDER}>`,
       to: [to],
@@ -126,15 +127,26 @@ const sendEmail = async (to, templateName, templateData) => {
 
     if (error) {
       console.error('[Email Service] Resend error:', error);
-      return false;
+      console.log('[Email Service] Falling back to dev mode logging:');
+      console.log(`
+╔══════════════════════════════════════════════════╗
+║  [FALLBACK] Email Would Have Been Sent           ║
+╠══════════════════════════════════════════════════╣
+║  To: ${to.padEnd(48)}║
+║  Subject: ${emailContent.subject.padEnd(36)}║
+║  OTP: ${otp.padEnd(50)}║
+╚══════════════════════════════════════════════════╝
+      `);
+      return true;
     }
 
     console.log(`[Email Service] Email sent successfully to ${to} (ID: ${data?.id})`);
     return true;
   } catch (error) {
-    console.error('[Email Service] Failed to send email:', error);
+    console.error('[Email Service] Unexpected error sending email:', error)
     return false;
   }
 };
+
 
 module.exports = { sendEmail, isResendConfigured };

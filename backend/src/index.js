@@ -22,6 +22,9 @@ initFirebase();
 
 const app = express();
 
+// Trust proxy for Render
+app.set('trust proxy', 1);
+
 // Security headers with Helmet
 app.use(helmet());
 
