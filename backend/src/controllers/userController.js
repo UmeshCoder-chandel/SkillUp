@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Video = require('../models/Video');
 const Playlist = require('../models/Playlist');
 const Category = require('../models/Category');
+const Creator = require('../models/Creator');
 const { ApiError, asyncHandler } = require('../utils/asyncHandler');
 
 exports.getProfile = asyncHandler(async (req, res) => {
@@ -128,4 +129,24 @@ exports.getDashboard = asyncHandler(async (req, res) => {
       savedCount: user.savedVideos.length,
     },
   });
+});
+
+exports.requestCreator = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  
+  // Check if already a creator or already has a pending request
+  if (user.role === 'creator') throw ApiError(400, 'You are already a creator');
+  if (user.creatorRequest.status === 'pending') throw ApiError(400, 'Your request is already pending');
+
+  const { notes } = req.body;
+
+  user.creatorRequest = {
+    status: 'pending',
+    requestedAt: new Date(),
+    notes: notes || ''
+  };
+
+  await user.save();
+  
+  res.json({ success: true, message: 'Creator request submitted successfully', data: user.toPublicJSON() });
 });

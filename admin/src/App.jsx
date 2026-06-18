@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import CreatorsPage from './pages/CreatorsPage';
+import CreatorRequestsPage from './pages/CreatorRequestsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import VideosPage from './pages/VideosPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/creators" element={<CreatorsPage />} />
+                <Route path="/creator-requests" element={<CreatorRequestsPage />} />
                 <Route path="/categories" element={<CategoriesPage />} />
                 <Route path="/videos" element={<VideosPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />

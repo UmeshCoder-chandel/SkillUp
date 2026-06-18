@@ -14,6 +14,7 @@ router.get('/watch-history', userController.getWatchHistory);
 router.post('/watch-history', userController.addWatchHistory);
 router.get('/saved', userController.getSavedVideos);
 router.post('/save/:videoId', userController.saveVideo);
+router.post('/request-creator', userController.requestCreator);
 router.get('/:id', userController.getUserById);
 
 module.exports = router;

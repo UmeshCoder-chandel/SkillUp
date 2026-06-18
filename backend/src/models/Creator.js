@@ -19,4 +19,8 @@ creatorSchema.virtual('followerCount').get(function () {
   return this.followers?.length || 0;
 });
 
+// Add indexes
+creatorSchema.index({ isActive: 1, totalVideos: -1 });
+creatorSchema.index({ isVerified: 1 });
+
 module.exports = mongoose.model('Creator', creatorSchema);

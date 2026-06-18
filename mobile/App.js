@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,42 +17,35 @@ SplashScreen.preventAutoHideAsync();
 function AppContent() {
   const dispatch = useDispatch();
   const { isDark, isLoading: themeLoading, colors } = useTheme();
-  const [appIsReady, setAppIsReady] = useState(false);
+  const { initializing: authInitializing } = useSelector((s) => s.auth);
+  const [splashHidden, setSplashHidden] = useState(false);
 
+  // Hide splash after 2 seconds, no conditions
   useEffect(() => {
-    console.log('AppContent: starting prepare()');
-    async function prepare() {
+    const timer = setTimeout(async () => {
       try {
-        console.log('AppContent: API_URL:', API_URL);
-        dispatch(loadUser());
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('AppContent: prepare() complete');
+        await SplashScreen.hideAsync();
+        setSplashHidden(true);
       } catch (e) {
-        console.warn('AppContent: prepare() error:', e);
-      } finally {
-        setAppIsReady(true);
+        console.warn('Error hiding splash screen:', e);
+        setSplashHidden(true);
       }
-    }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
-    prepare();
+  // Load user data
+  useEffect(() => {
+    console.log('AppContent: loading user data');
+    dispatch(loadUser());
   }, [dispatch]);
 
-  const onLayoutRootView = useCallback(async () => {
-    console.log(`AppContent: onLayoutRootView called, appIsReady=${appIsReady}, themeLoading=${themeLoading}`);
-    if (appIsReady && !themeLoading) {
-      try {
-        console.log('AppContent: hiding splash screen');
-        await SplashScreen.hideAsync();
-      } catch (e) {
-        console.warn('AppContent: error hiding splash:', e);
-      }
-    }
-  }, [appIsReady, themeLoading]);
+  const isReady = splashHidden && !themeLoading && !authInitializing;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      {appIsReady && !themeLoading ? (
+      {isReady ? (
         <AppNavigator />
       ) : (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

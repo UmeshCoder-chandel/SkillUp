@@ -23,6 +23,7 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [creator, setCreator] = useState(null);
+  const [requestingCreator, setRequestingCreator] = useState(false);
 
   useEffect(() => {
     api.get('/users/profile').then(({ data }) => setProfile(data.data)).catch(() => {});
@@ -55,19 +56,20 @@ export default function ProfileScreen() {
 
   const savedCount = profile?.user?.savedVideos?.length || 0;
   const topicsCount = profile?.playlists?.length || 0;
+  const isCreator = creator || user?.role === 'creator';
+  const hasPendingRequest = profile?.user?.creatorRequest?.status === 'pending';
 
   const becomeCreator = async () => {
+    setRequestingCreator(true);
     try {
-      await api.post('/creators/become', {
-        displayName: user?.name,
-        bio: 'Creator on SkillLearn',
-      });
-      // Refresh creator info
-      const { data } = await api.get('/creators');
-      const found = (data.data || []).find(c => c.userId?._id?.toString() === user?._id?.toString());
-      setCreator(found || null);
+      await api.post('/users/request-creator');
+      // Refresh profile
+      const { data } = await api.get('/users/profile');
+      setProfile(data.data);
     } catch (error) {
-      console.error('Failed to become creator:', error);
+      console.error('Failed to request creator:', error);
+    } finally {
+      setRequestingCreator(false);
     }
   };
 
@@ -106,17 +108,23 @@ export default function ProfileScreen() {
           <Text style={styles.email}>{user?.email}</Text>
         </View>
 
-        {creator ? (
+        {isCreator ? (
           <Button
             title="Upload Video"
             onPress={() => navigation.navigate('UploadVideo')}
             icon={<Ionicons name="cloud-upload-outline" size={18} color="#fff" />}
             style={styles.uploadButton}
           />
+        ) : hasPendingRequest ? (
+          <View style={styles.pendingRequestContainer}>
+            <Ionicons name="time-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.pendingRequestText}>Creator request pending approval</Text>
+          </View>
         ) : (
           <Button
             title="Become a Creator"
             onPress={becomeCreator}
+            loading={requestingCreator}
             variant="outline"
             icon={<Ionicons name="create-outline" size={18} color={COLORS.primary} />}
             style={styles.becomeButton}
@@ -232,6 +240,23 @@ const styles = StyleSheet.create({
   avatarText: { color: COLORS.text, fontSize: 36, fontWeight: '800' },
   name: { color: COLORS.text, fontSize: 24, fontWeight: '800', marginTop: 14 },
   email: { color: COLORS.textSecondary, fontSize: 14, marginTop: 4 },
+  pendingRequestContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 10,
+  },
+  pendingRequestText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
   statCard: {
     flex: 1,
@@ -307,16 +332,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     gap: 12,
   },
-  settingsIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: COLORS.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
   leaderMe: { borderColor: COLORS.primary },
   leaderRank: { color: COLORS.textSecondary, fontWeight: '700', width: 28 },
   leaderAvatar: { width: 36, height: 36, borderRadius: 18 },
@@ -332,16 +347,6 @@ const styles = StyleSheet.create({
   leaderName: { flex: 1, color: COLORS.text, fontWeight: '600', fontSize: 15 },
   leaderXp: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   leaderXpText: { color: COLORS.text, fontWeight: '700' },
-  settingsIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: COLORS.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
   appBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

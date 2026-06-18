@@ -11,6 +11,7 @@ const ThemeContext = createContext({
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+  console.log('useTheme: context values', { isLoading: context?.isLoading, isDark: context?.isDark });
   // Add extra safety check
   if (!context || !context.colors) {
     console.warn('Theme context not available, using fallback');
@@ -29,14 +30,17 @@ export const ThemeProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('ThemeProvider: starting loadTheme');
     const loadTheme = async () => {
       try {
         const settings = await loadSettings();
+        console.log('ThemeProvider: loaded settings', settings);
         setIsDark(settings.darkMode);
       } catch (error) {
-        console.error('Error loading theme:', error);
+        console.error('ThemeProvider: error loading theme:', error);
         setIsDark(defaultSettings.darkMode);
       } finally {
+        console.log('ThemeProvider: setting isLoading to false');
         setIsLoading(false);
       }
     };

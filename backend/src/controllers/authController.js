@@ -34,10 +34,9 @@ exports.register = asyncHandler(async (req, res) => {
   });
 
   try {
-    await sendOTPEmail(email, otp);
+    await sendOTPEmail(email, otp, 'verify', name);
   } catch (emailErr) {
     console.error('OTP email failed:', emailErr.message);
-    console.log(`[FALLBACK OTP] ${email}: ${otp}`);
   }
 
   res.status(201).json({
@@ -75,10 +74,9 @@ exports.resendOTP = asyncHandler(async (req, res) => {
   await user.save();
 
   try {
-    await sendOTPEmail(email, user.otp);
+    await sendOTPEmail(email, user.otp, 'verify', user.name);
   } catch (emailErr) {
     console.error('OTP email failed:', emailErr.message);
-    console.log(`[FALLBACK OTP] ${email}: ${user.otp}`);
   }
 
   res.json({ success: true, message: 'OTP sent successfully' });
@@ -171,11 +169,10 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     await user.save();
 
     try {
-      await sendOTPEmail(email, otp, 'reset');
-    } catch (emailErr) {
-      console.error('Reset email failed:', emailErr.message);
-      console.log(`[FALLBACK RESET OTP] ${email}: ${otp}`);
-    }
+    await sendOTPEmail(email, otp, 'reset', user.name);
+  } catch (emailErr) {
+    console.error('Reset email failed:', emailErr.message);
+  }
   }
 
   res.json({

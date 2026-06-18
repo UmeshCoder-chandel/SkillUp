@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema(
     interests: [{ type: String }],
     role: { type: String, enum: ['user', 'creator', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: false },
+    creatorRequest: {
+      status: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
+      requestedAt: Date,
+      notes: { type: String, default: '' }
+    },
     otp: { type: String, select: false },
     otpExpires: { type: Date, select: false },
     refreshToken: { type: String, select: false },
@@ -48,8 +53,13 @@ userSchema.methods.toPublicJSON = function () {
     interests: this.interests,
     role: this.role,
     isVerified: this.isVerified,
+    creatorRequest: this.creatorRequest,
     createdAt: this.createdAt,
   };
 };
+
+// Add indexes
+userSchema.index({ role: 1 });
+userSchema.index({ isVerified: 1 });
 
 module.exports = mongoose.model('User', userSchema);

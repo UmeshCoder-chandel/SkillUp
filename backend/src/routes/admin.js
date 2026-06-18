@@ -43,6 +43,10 @@ router.get('/users', adminController.getUsers);
 router.put('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.deleteUser);
 
+router.get('/creator-requests', adminController.getCreatorRequests);
+router.put('/creator-requests/:id/approve', adminController.approveCreatorRequest);
+router.put('/creator-requests/:id/reject', adminController.rejectCreatorRequest);
+
 router.get('/creators', adminController.getCreators);
 router.put('/creators/:id', adminController.updateCreator);
 router.delete('/creators/:id', adminController.deleteCreator);

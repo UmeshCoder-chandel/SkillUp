@@ -239,6 +239,61 @@ exports.getReports = asyncHandler(async (req, res) => {
   });
 });
 
+exports.getCreatorRequests = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+
+  const [requests, total] = await Promise.all([
+    User.find({ 'creatorRequest.status': 'pending' })
+      .select('name email avatar bio createdAt creatorRequest')
+      .sort({ 'creatorRequest.requestedAt': -1 })
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments({ 'creatorRequest.status': 'pending' })
+  ]);
+
+  res.json({ 
+    success: true, 
+    data: requests, 
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) } 
+  });
+});
+
+exports.approveCreatorRequest = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw ApiError(404, 'User not found');
+  if (user.creatorRequest.status !== 'pending') throw ApiError(400, 'No pending request for this user');
+
+  // Update user
+  user.creatorRequest.status = 'approved';
+  user.role = 'creator';
+  await user.save();
+
+  // Create Creator document
+  const creator = await Creator.create({
+    userId: user._id,
+    displayName: user.name,
+    bio: user.bio,
+    avatar: user.avatar
+  });
+
+  res.json({ success: true, message: 'Creator request approved', data: { user, creator } });
+});
+
+exports.rejectCreatorRequest = asyncHandler(async (req, res) => {
+  const { notes } = req.body;
+  const user = await User.findById(req.params.id);
+  if (!user) throw ApiError(404, 'User not found');
+  if (user.creatorRequest.status !== 'pending') throw ApiError(400, 'No pending request for this user');
+
+  user.creatorRequest.status = 'rejected';
+  user.creatorRequest.notes = notes || '';
+  await user.save();
+
+  res.json({ success: true, message: 'Creator request rejected', data: user.toPublicJSON() });
+});
+
 exports.adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email, role: 'admin' }).select('+password');
