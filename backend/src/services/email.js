@@ -1,19 +1,25 @@
-const { Resend } = require('resend');
 
-// Initialize Resend client
-let resend;
-let isResendConfigured = false;
+const nodemailer = require('nodemailer');
 
-if (process.env.RESEND_API_KEY) {
-  resend = new Resend(process.env.RESEND_API_KEY);
-  isResendConfigured = true;
-  console.log('[Email Service] Resend configured successfully');
+// Initialize nodemailer transporter
+let transporter;
+let isEmailConfigured = false;
+
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  isEmailConfigured = true;
+  console.log('[Email Service] Nodemailer configured successfully');
 } else {
-  console.warn('[Email Service] Resend API key not found. Using dev mode (emails logged to console)');
+  console.warn('[Email Service] SMTP credentials not found. Using dev mode (emails logged to console)');
 }
-
-// Default sender email - use onboarding@resend.dev for testing (allowed by Resend)
-const DEFAULT_SENDER = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 // Email templates
 const templates = {
@@ -85,7 +91,7 @@ const templates = {
 };
 
 /**
- * Send an email using Resend (or log to console in dev/fallback)
+ * Send an email using nodemailer (or log to console in dev)
  * @param {string} to - Recipient email address
  * @param {string} templateName - Template name (otpVerification, passwordReset, accountVerification)
  * @param {object} templateData - Data for template (otp, name)
@@ -101,8 +107,8 @@ const sendEmail = async (to, templateName, templateData) => {
     const { otp, name } = templateData;
     const emailContent = template(otp, name || 'User');
 
-    // Check if Resend is configured
-    if (!isResendConfigured) {
+    // Check if nodemailer is configured
+    if (!isEmailConfigured) {
       console.log(`
 ╔══════════════════════════════════════════════════╗
 ║  [DEV MODE] Email Would Be Sent                   ║
@@ -115,38 +121,35 @@ const sendEmail = async (to, templateName, templateData) => {
       return true;
     }
 
-    // Send via Resend
+    // Send via nodemailer
     console.log(`[Email Service] Sending email to ${to}...`);
-    const { data, error } = await resend.emails.send({
-      from: `SkillLearn <${DEFAULT_SENDER}>`,
-      to: [to],
+    await transporter.sendMail({
+      from: `SkillLearn <${process.env.SMTP_USER}>`,
+      to: to,
       subject: emailContent.subject,
       html: emailContent.html,
       text: emailContent.text,
     });
 
-    if (error) {
-      console.error('[Email Service] Resend error:', error);
-      console.log('[Email Service] Falling back to dev mode logging:');
-      console.log(`
+    console.log(`[Email Service] Email sent successfully to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('[Email Service] Failed to send email:', error);
+    console.log('[Email Service] Falling back to dev mode logging:');
+    const { otp, name } = templateData || {};
+    const fallbackTemplate = templates[templateName];
+    const subject = fallbackTemplate ? fallbackTemplate(otp || '', name || 'User').subject : 'Email';
+    console.log(`
 ╔══════════════════════════════════════════════════╗
 ║  [FALLBACK] Email Would Have Been Sent           ║
 ╠══════════════════════════════════════════════════╣
 ║  To: ${to.padEnd(48)}║
-║  Subject: ${emailContent.subject.padEnd(36)}║
-║  OTP: ${otp.padEnd(50)}║
+║  Subject: ${subject.padEnd(36)}║
+║  OTP: ${(otp || '').padEnd(50)}║
 ╚══════════════════════════════════════════════════╝
-      `);
-      return true;
-    }
-
-    console.log(`[Email Service] Email sent successfully to ${to} (ID: ${data?.id})`);
+    `);
     return true;
-  } catch (error) {
-    console.error('[Email Service] Unexpected error sending email:', error)
-    return false;
   }
 };
 
-
-module.exports = { sendEmail, isResendConfigured };
+module.exports = { sendEmail, isEmailConfigured };
