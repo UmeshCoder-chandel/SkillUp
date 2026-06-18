@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { generateOTP, sendOTPEmail } = require('../utils/otp');
+const { sendEmail } = require('../services/email');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { verifyFirebaseToken } = require('../config/firebase');
 const { ApiError, asyncHandler } = require('../utils/asyncHandler');
@@ -59,6 +60,13 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
+
+  // Send welcome email
+  try {
+    await sendEmail(email, 'welcome', { name: user.name });
+  } catch (emailErr) {
+    console.error('Welcome email failed:', emailErr.message);
+  }
 
   sendTokens(user, res);
 });
