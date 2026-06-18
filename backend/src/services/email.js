@@ -1,24 +1,42 @@
 
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Initialize nodemailer transporter
+// Determine which email provider to use
+const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'nodemailer';
+
+// Initialize email providers
 let transporter;
+let resend;
 let isEmailConfigured = false;
+let activeProvider = 'dev';
 
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+// Initialize nodemailer
+if (EMAIL_PROVIDER === 'nodemailer' && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: false, // true for 465, false for other ports
+    secure: false,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
     }
   });
   isEmailConfigured = true;
+  activeProvider = 'nodemailer';
   console.log('[Email Service] Nodemailer configured successfully');
-} else {
-  console.warn('[Email Service] SMTP credentials not found. Using dev mode (emails logged to console)');
+}
+
+// Initialize Resend
+if (EMAIL_PROVIDER === 'resend' && process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+  isEmailConfigured = true;
+  activeProvider = 'resend';
+  console.log('[Email Service] Resend configured successfully');
+}
+
+if (!isEmailConfigured) {
+  console.warn('[Email Service] No email provider configured. Using dev mode (emails logged to console)');
 }
 
 // Email templates
@@ -91,7 +109,7 @@ const templates = {
 };
 
 /**
- * Send an email using nodemailer (or log to console in dev)
+ * Send an email using configured provider (or log to console in dev)
  * @param {string} to - Recipient email address
  * @param {string} templateName - Template name (otpVerification, passwordReset, accountVerification)
  * @param {object} templateData - Data for template (otp, name)
@@ -107,7 +125,7 @@ const sendEmail = async (to, templateName, templateData) => {
     const { otp, name } = templateData;
     const emailContent = template(otp, name || 'User');
 
-    // Check if nodemailer is configured
+    // Check if any email provider is configured
     if (!isEmailConfigured) {
       console.log(`
 ╔══════════════════════════════════════════════════╗
@@ -121,17 +139,33 @@ const sendEmail = async (to, templateName, templateData) => {
       return true;
     }
 
-    // Send via nodemailer
-    console.log(`[Email Service] Sending email to ${to}...`);
-    await transporter.sendMail({
-      from: `SkillLearn <${process.env.SMTP_USER}>`,
-      to: to,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
-    });
+    // Send via Resend
+    if (activeProvider === 'resend') {
+      console.log(`[Email Service] Sending email via Resend to ${to}...`);
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+        to: to,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+      console.log(`[Email Service] Email sent successfully via Resend to ${to}`);
+      return true;
+    }
 
-    console.log(`[Email Service] Email sent successfully to ${to}`);
+    // Send via nodemailer
+    if (activeProvider === 'nodemailer') {
+      console.log(`[Email Service] Sending email via Nodemailer to ${to}...`);
+      await transporter.sendMail({
+        from: `SkillLearn <${process.env.SMTP_USER}>`,
+        to: to,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      });
+      console.log(`[Email Service] Email sent successfully via Nodemailer to ${to}`);
+      return true;
+    }
+
     return true;
   } catch (error) {
     console.error('[Email Service] Failed to send email:', error);
@@ -152,4 +186,4 @@ const sendEmail = async (to, templateName, templateData) => {
   }
 };
 
-module.exports = { sendEmail, isEmailConfigured };
+module.exports = { sendEmail, isEmailConfigured, activeProvider };
