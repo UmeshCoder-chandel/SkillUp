@@ -4,10 +4,17 @@ import { storage } from '../utils/storage';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 20000, // 20 seconds for normal API requests
+  timeout: 30000, // 30 seconds - longer timeout for Render cold starts
 });
 
+// Request interceptor with logging
 api.interceptors.request.use(async (config) => {
+  console.log("=== API REQUEST ===");
+  console.log("API URL:", API_URL);
+  console.log("Request Method:", config.method?.toUpperCase());
+  console.log("Request URL:", config.baseURL + config.url);
+  console.log("Request Data:", config.data);
+
   const token = await storage.getAccessToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   
@@ -17,11 +24,28 @@ api.interceptors.request.use(async (config) => {
   }
   
   return config;
+}, (error) => {
+  console.log("=== REQUEST ERROR ===");
+  console.log("Error:", error);
+  return Promise.reject(error);
 });
 
+// Response interceptor with logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("=== API RESPONSE ===");
+    console.log("Status:", response.status);
+    console.log("Response Data:", response.data);
+    return response;
+  },
   async (error) => {
+    console.log("=== API RESPONSE ERROR ===");
+    console.log("Error:", error);
+    console.log("Error Message:", error.message);
+    console.log("Error Response:", error.response?.data);
+    console.log("Error Status:", error.response?.status);
+    console.log("Error Request:", error.request);
+
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;

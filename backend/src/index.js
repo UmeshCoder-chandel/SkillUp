@@ -25,26 +25,25 @@ const app = express();
 // Trust proxy for Render
 app.set('trust proxy', 1);
 
-// Security headers with Helmet
-app.use(helmet());
+// Security headers with Helmet - mobile-friendly
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+        connectSrc: ["'self'", "*"], // Allow all for mobile development
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
-// CORS for Render - flexible configuration
-const allowedOrigins = [
-  process.env.MOBILE_URL,
-  process.env.ADMIN_URL,
-].filter(Boolean);
-
+// CORS for Render - very permissive for development and testing
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? (origin, callback) => {
-          if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-          } else {
-            callback(null, true); // Allow all for Render compatibility
-          }
-        }
-      : true,
+    origin: true,
     credentials: true,
   })
 );
