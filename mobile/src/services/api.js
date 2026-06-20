@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30 seconds - longer timeout for Render cold starts
+  timeout: 120000, // 120 seconds - super long timeout for Render
 });
 
 // Request interceptor with logging

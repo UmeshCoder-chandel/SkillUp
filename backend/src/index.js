@@ -52,6 +52,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(apiLimiter);
 
+// Simple health endpoint - no dependencies, super fast
+app.get('/health', (req, res) => {
+  res.json({ success: true, message: 'Server Working', timestamp: new Date() });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'SkillLearn API is running', timestamp: new Date() });
 });
