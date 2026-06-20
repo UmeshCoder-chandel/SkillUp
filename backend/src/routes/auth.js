@@ -51,20 +51,12 @@ router.get('/me', protect, authController.getMe);
 router.post(
   '/forgot-password',
   authLimiter,
-  [body('email').isEmail().withMessage('Valid email required')],
-  validate,
   authController.forgotPassword
 );
 
 router.post(
   '/reset-password',
   authLimiter,
-  [
-    body('email').isEmail().withMessage('Valid email required'),
-    body('otp').isLength({ min: 6, max: 6 }).withMessage('Reset code must be 6 digits'),
-    body('password').isLength({ min: 6 }).withMessage('Password min 6 characters'),
-  ],
-  validate,
   authController.resetPassword
 );
 
