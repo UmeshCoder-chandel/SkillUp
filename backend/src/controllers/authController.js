@@ -24,27 +24,15 @@ exports.register = asyncHandler(async (req, res) => {
   const existing = await User.findOne({ email });
   if (existing) throw ApiError(400, 'Email already registered');
 
-  const otp = generateOTP();
-  const user =   await User.create({
+  const user = await User.create({
     name,
     email,
     password,
     interests: interests || [],
-    otp,
-    otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+    isVerified: true, // Auto-verify all users by default
   });
 
-  try {
-    await sendOTPEmail(email, otp, 'verify', name);
-  } catch (emailErr) {
-    console.error('OTP email failed:', emailErr.message);
-  }
-
-  res.status(201).json({
-    success: true,
-    message: 'Registration successful. Please verify your email with OTP.',
-    data: { userId: user._id, email: user.email },
-  });
+  sendTokens(user, res);
 });
 
 exports.verifyOTP = asyncHandler(async (req, res) => {
@@ -97,8 +85,11 @@ exports.login = asyncHandler(async (req, res) => {
   if (!user || !(await user.comparePassword(password))) {
     throw ApiError(401, 'Invalid email or password');
   }
+
+  // Ensure user is verified (auto-verify if not already)
   if (!user.isVerified) {
-    throw ApiError(403, 'Please verify your email first. Check your inbox for the OTP or tap Verify OTP on the login screen.');
+    user.isVerified = true;
+    await user.save();
   }
 
   user.refreshToken = generateRefreshToken(user._id);

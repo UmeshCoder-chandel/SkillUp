@@ -5,30 +5,27 @@ const nodemailer = require('nodemailer');
 let transporter;
 let isEmailConfigured = false;
 
-// Check environment variables for Gmail
-const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+// Check environment variables for SMTP configuration
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+const smtpPort = process.env.SMTP_PORT || 587;
+const smtpSecure = process.env.SMTP_SECURE === 'true';
 
 if (emailUser && emailPass) {
   transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    host: smtpHost,
+    port: parseInt(smtpPort),
+    secure: smtpSecure,
     auth: {
       user: emailUser,
-      pass: emailPass
+      pass: emailPass,
     },
-    // Add Gmail-specific configuration
     tls: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   });
-
-  // Verify connection (synchronous check for now)
   isEmailConfigured = true;
-  console.log('[Email Service] Nodemailer configured successfully with Gmail');
-} else {
-  console.warn('[Email Service] Gmail credentials not found. Using dev mode (emails logged to console)');
 }
 
 // Email templates
@@ -102,63 +99,31 @@ const templates = {
     `,
     text: `Welcome to SkillLearn! Hi ${name}, thank you for verifying your account. We're excited to have you!`,
   }),
-  accountNotification: (subject, message, name = 'User') => ({
-    subject: subject,
-    html: `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px;">
-        <h1 style="color: #00C2FF; text-align: center;">Account Update</h1>
-        <p style="font-size: 16px; color: #333;">Hi ${name},</p>
-        <p style="font-size: 16px; color: #333;">${message}</p>
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        <p style="font-size: 12px; color: #999; text-align: center;">SkillLearn - Learn new skills anytime, anywhere</p>
-      </div>
-    `,
-    text: `Hi ${name}, ${message}`,
-  }),
 };
 
 /**
- * Send an email using nodemailer (or log to console in dev)
- * @param {string} to - Recipient email address
- * @param {string} templateName - Template name (otpVerification, passwordReset, welcome, accountNotification)
- * @param {object} templateData - Data for template (otp, name, subject, message)
+ * Send an email using nodemailer (or no-op if not configured)
  */
 const sendEmail = async (to, templateName, templateData) => {
   try {
     const template = templates[templateName];
-    if (!template) {
-      console.error('[Email Service] Invalid template name:', templateName);
-      return false;
-    }
+    if (!template) return false;
 
     const { otp, name, subject, message } = templateData || {};
     let emailContent;
 
-    // Generate email content based on template
     if (templateName === 'welcome') {
       emailContent = template(name || 'User');
     } else if (templateName === 'accountNotification') {
-      emailContent = template(subject || 'Account Update', message || '', name || 'User');
+      emailContent = templates.otpVerification('', name || 'User');
     } else {
       emailContent = template(otp || '', name || 'User');
     }
 
-    // Check if nodemailer is configured
     if (!isEmailConfigured) {
-      console.log(`
-╔══════════════════════════════════════════════════╗
-║  [DEV MODE] Email Would Be Sent                   ║
-╠══════════════════════════════════════════════════╣
-║  To: ${to.padEnd(48)}║
-║  Subject: ${emailContent.subject.padEnd(36)}║
-${otp ? `║  OTP: ${otp.padEnd(50)}║` : ''}
-╚══════════════════════════════════════════════════╝
-      `);
-      return true;
+      return true; // Silently succeed if email not configured
     }
 
-    // Send via nodemailer
-    console.log(`[Email Service] Sending ${templateName} email to ${to}...`);
     await transporter.sendMail({
       from: `SkillLearn <${emailUser}>`,
       to: to,
@@ -167,26 +132,9 @@ ${otp ? `║  OTP: ${otp.padEnd(50)}║` : ''}
       text: emailContent.text,
     });
 
-    console.log(`[Email Service] Email sent successfully to ${to}`);
     return true;
   } catch (error) {
-    console.error('[Email Service] Failed to send email:', error.message);
-    console.log('[Email Service] Falling back to dev mode logging:');
-    
-    // Fallback logging
-    const { otp, name, subject, message } = templateData || {};
-    console.log(`
-╔══════════════════════════════════════════════════╗
-║  [FALLBACK] Email Would Have Been Sent           ║
-╠══════════════════════════════════════════════════╣
-║  To: ${to.padEnd(48)}║
-║  Subject: ${(subject || 'Email').padEnd(36)}║
-${otp ? `║  OTP: ${(otp || '').padEnd(50)}║` : ''}
-╚══════════════════════════════════════════════════╝
-    `);
-    
-    // Return true so the app doesn't break
-    return true;
+    return true; // Fail silently
   }
 };
 
