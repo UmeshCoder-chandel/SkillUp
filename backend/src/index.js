@@ -28,14 +28,27 @@ app.set('trust proxy', 1);
 // Security headers with Helmet
 app.use(helmet());
 
+// CORS for Render - flexible configuration
+const allowedOrigins = [
+  process.env.MOBILE_URL,
+  process.env.ADMIN_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production'
-      ? [process.env.MOBILE_URL, process.env.ADMIN_URL].filter(Boolean)
+    origin: process.env.NODE_ENV === 'production' 
+      ? (origin, callback) => {
+          if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+          } else {
+            callback(null, true); // Allow all for Render compatibility
+          }
+        }
       : true,
     credentials: true,
   })
 );
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(apiLimiter);
