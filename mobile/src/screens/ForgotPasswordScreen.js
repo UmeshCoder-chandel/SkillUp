@@ -11,10 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { forgotPassword, clearError, clearSuccess } from '../store/authSlice';
 import { Button, IconInput } from '../components/UI';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const dispatch = useDispatch();
+  const { colors } = useTheme();
   const { error, successMessage, resetEmail } = useSelector((s) => s.auth);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,21 +32,21 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.back}>← Back</Text>
+            <Text style={[styles.back, { color: colors.primary }]}>← Back</Text>
           </TouchableOpacity>
 
           <Text style={styles.icon}>🔑</Text>
-          <Text style={styles.title}>Forgot password?</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Forgot password?</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter your email and we&apos;ll send you a 6-digit reset code.
           </Text>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
+          {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
+          {successMessage ? <Text style={[styles.success, { color: colors.success }]}>{successMessage}</Text> : null}
 
           <IconInput
             icon="mail-outline"
@@ -60,7 +61,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
           {resetEmail ? (
             <TouchableOpacity onPress={() => navigation.navigate('ResetPassword', { email: resetEmail })}>
-              <Text style={styles.link}>Already have a code? Reset password</Text>
+              <Text style={[styles.link, { color: colors.primary }]}>Already have a code? Reset password</Text>
             </TouchableOpacity>
           ) : null}
         </ScrollView>
@@ -70,15 +71,15 @@ export default function ForgotPasswordScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32 },
-  back: { color: COLORS.primary, fontSize: 16, fontWeight: '600', marginBottom: 24 },
+  back: { fontSize: 16, fontWeight: '600', marginBottom: 24 },
   icon: { fontSize: 36, marginBottom: 20 },
-  title: { fontSize: 32, fontWeight: '800', color: COLORS.text },
-  subtitle: { color: COLORS.textSecondary, fontSize: 16, marginTop: 8, marginBottom: 32, lineHeight: 24 },
-  error: { color: COLORS.error, marginBottom: 12, textAlign: 'center' },
-  success: { color: COLORS.success, marginBottom: 12, textAlign: 'center', lineHeight: 22 },
+  title: { fontSize: 32, fontWeight: '800' },
+  subtitle: { fontSize: 16, marginTop: 8, marginBottom: 32, lineHeight: 24 },
+  error: { marginBottom: 12, textAlign: 'center' },
+  success: { marginBottom: 12, textAlign: 'center', lineHeight: 22 },
   primaryBtn: { marginTop: 8 },
-  link: { color: COLORS.primary, textAlign: 'center', marginTop: 20, fontWeight: '600' },
+  link: { textAlign: 'center', marginTop: 20, fontWeight: '600' },
 });

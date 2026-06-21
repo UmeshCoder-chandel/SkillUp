@@ -11,9 +11,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, clearError, clearSuccess } from '../store/authSlice';
 import { Button, IconInput } from '../components/UI';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ResetPasswordScreen({ navigation, route }) {
+  const { colors } = useTheme();
   const dispatch = useDispatch();
   const { error, successMessage } = useSelector((s) => s.auth);
   const [email, setEmail] = useState(route.params?.email || '');
@@ -31,6 +32,20 @@ export default function ResetPasswordScreen({ navigation, route }) {
       navigation.navigate('Login');
     }
   };
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    flex: { flex: 1 },
+    scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32 },
+    back: { color: colors.primary, fontSize: 16, fontWeight: '600', marginBottom: 24 },
+    icon: { fontSize: 36, marginBottom: 20 },
+    title: { fontSize: 32, fontWeight: '800', color: colors.text },
+    subtitle: { color: colors.textSecondary, fontSize: 16, marginTop: 8, marginBottom: 32, lineHeight: 24 },
+    error: { color: colors.error, marginBottom: 12, textAlign: 'center' },
+    success: { color: colors.success, marginBottom: 12, textAlign: 'center', lineHeight: 22 },
+    primaryBtn: { marginTop: 8 },
+    link: { color: colors.primary, textAlign: 'center', marginTop: 20, fontWeight: '600' },
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,17 +96,3 @@ export default function ResetPasswordScreen({ navigation, route }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  flex: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32 },
-  back: { color: COLORS.primary, fontSize: 16, fontWeight: '600', marginBottom: 24 },
-  icon: { fontSize: 36, marginBottom: 20 },
-  title: { fontSize: 32, fontWeight: '800', color: COLORS.text },
-  subtitle: { color: COLORS.textSecondary, fontSize: 16, marginTop: 8, marginBottom: 32, lineHeight: 24 },
-  error: { color: COLORS.error, marginBottom: 12, textAlign: 'center' },
-  success: { color: COLORS.success, marginBottom: 12, textAlign: 'center', lineHeight: 22 },
-  primaryBtn: { marginTop: 8 },
-  link: { color: COLORS.primary, textAlign: 'center', marginTop: 20, fontWeight: '600' },
-});

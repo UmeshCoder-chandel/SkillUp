@@ -50,13 +50,21 @@ router.get('/me', protect, authController.getMe);
 
 router.post(
   '/forgot-password',
-  authLimiter,
+  (req, res, next) => {
+    console.log('=== FORGOT PASSWORD ROUTE HIT ===');
+    console.log('Request Body:', req.body);
+    next();
+  },
   authController.forgotPassword
 );
 
 router.post(
   '/reset-password',
-  authLimiter,
+  (req, res, next) => {
+    console.log('=== RESET PASSWORD ROUTE HIT ===');
+    console.log('Request Body:', req.body);
+    next();
+  },
   authController.resetPassword
 );
 

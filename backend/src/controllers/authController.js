@@ -32,18 +32,28 @@ exports.register = asyncHandler(async (req, res) => {
   const existing = await User.findOne({ email });
   if (existing) throw ApiError(400, 'Email already registered');
 
+  // Generate OTP first
+  const otp = generateOTP();
+
   const user = await User.create({
     name,
     email,
     password,
     interests: interests || [],
-    isVerified: true, // Auto-verify for production testing
+    isVerified: false, // Don't auto-verify
+    otp,
+    otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
   });
 
-  // Send welcome email in background
-  sendEmailBackground(email, 'welcome', { name: user.name });
+  // Send OTP email in background (non-blocking)
+  sendEmailBackground(email, 'verify', { name: user.name, otp });
 
-  sendTokens(user, res);
+  // Don't send tokens - user needs to verify first
+  res.json({
+    success: true,
+    message: 'Registration successful! Please verify your email with the OTP sent.',
+    data: { email: user.email }
+  });
 });
 
 exports.verifyOTP = asyncHandler(async (req, res) => {
@@ -97,10 +107,9 @@ exports.login = asyncHandler(async (req, res) => {
     throw ApiError(401, 'Invalid email or password');
   }
 
-  // Auto-verify if not already done
+  // Check if email is verified
   if (!user.isVerified) {
-    user.isVerified = true;
-    await user.save();
+    throw ApiError(403, 'Please verify your email first');
   }
 
   user.refreshToken = generateRefreshToken(user._id);
@@ -168,19 +177,26 @@ exports.getMe = asyncHandler(async (req, res) => {
 });
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
+  console.log('=== FORGOT PASSWORD CONTROLLER STARTED ===');
   const { email } = req.body;
+  console.log('Email:', email);
   
   // Always return instantly!
+  console.log('Sending response...');
   res.json({
     success: true,
     message: 'If an account exists for this email, a reset code has been sent.',
   });
+  console.log('=== FORGOT PASSWORD CONTROLLER FINISHED ===');
 });
 
 exports.resetPassword = asyncHandler(async (req, res) => {
+  console.log('=== RESET PASSWORD CONTROLLER STARTED ===');
   const { email, otp, password } = req.body;
+  console.log('Email:', email);
+  console.log('OTP:', otp);
   
-  // Simple password reset (accepts any OTP
+  // Simple password reset (accepts any OTP)
   const user = await User.findOne({ email });
   if (user) {
     user.password = password;
@@ -188,6 +204,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     await user.save();
   }
 
+  console.log('Sending response...');
   res.json({ success: true, message: 'Password reset successful. You can now log in.' });
+  console.log('=== RESET PASSWORD CONTROLLER FINISHED ===');
 });
 

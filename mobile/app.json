@@ -8,6 +8,7 @@
     "newArchEnabled": true,
     "userInterfaceStyle": "automatic",
     "splash": {
+      "image": "./assets/splashscreen_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#F8FAFC"
     },
@@ -16,11 +17,17 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.skilllearn.app"
+      "bundleIdentifier": "com.skilllearn.app",
+      "splash": {
+        "image": "./assets/splashscreen_logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F8FAFC"
+      }
     },
     "android": {
       "package": "com.skilllearn.app",
       "splash": {
+        "image": "./assets/splashscreen_logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#F8FAFC"
       }
