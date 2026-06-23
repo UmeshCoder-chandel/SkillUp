@@ -1,20 +1,10 @@
+
 require('dotenv').config();
-const { sendEmail, isEmailConfigured, transporter } = require('./src/services/email');
+const { sendEmail, isEmailConfigured } = require('./src/services/email');
 
 async function testEmail() {
-  console.log('=== Email Service Test ===');
+  console.log('=== SendGrid Email Service Test ===');
   console.log('Is Email Configured:', isEmailConfigured);
-  
-  // Test transporter verify
-  if (transporter) {
-    console.log('\nTesting SMTP connection...');
-    try {
-      const verifyResult = await transporter.verify();
-      console.log('✅ SMTP Connection Verified:', verifyResult);
-    } catch (err) {
-      console.error('❌ SMTP Connection Failed:', err.message);
-    }
-  }
   
   // Test verification email
   console.log('\nTesting verification email...');

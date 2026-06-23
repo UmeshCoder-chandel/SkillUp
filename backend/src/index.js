@@ -78,42 +78,40 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'SkillLearn API is running', timestamp: new Date() });
 });
 
-// Test Email Endpoint - only available in development
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/api/test/email', async (req, res) => {
-    console.log('\n=== Test Email Endpoint Hit ===');
-    const testEmail = req.query.email || 'umeshchandel551@gmail.com';
+// Test Email Endpoint
+app.get('/api/test/email', async (req, res) => {
+  console.log('\n=== Test Email Endpoint Hit ===');
+  const testEmail = req.query.email || 'umeshchandel551@gmail.com';
+  
+  try {
+    const { sendEmail, isEmailConfigured } = require('./services/email');
     
-    try {
-      const { sendEmail, isEmailConfigured } = require('./services/email');
-      
-      const results = {
-        isEmailConfigured,
-        testEmail,
-        emailsSent: {},
-        timestamp: new Date()
-      };
-      
-      console.log(`Sending test verification email to ${testEmail}`);
-      results.emailsSent.verify = await sendEmail(testEmail, 'verify', { otp: '123456', name: 'Test User' });
-      console.log(`Sending test reset email to ${testEmail}`);
-      results.emailsSent.reset = await sendEmail(testEmail, 'reset', { otp: '654321', name: 'Test User' });
-      
-      res.json({
-        success: true,
-        message: 'Test emails sent successfully (check console for details)',
-        data: results
-      });
-    } catch (error) {
-      console.error('❌ Test email endpoint failed:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send test emails',
-        error: error.message
-      });
-    }
-  });
-}
+    const results = {
+      isEmailConfigured,
+      testEmail,
+      emailsSent: {},
+      timestamp: new Date()
+    };
+    
+    console.log(`Sending test verification email to ${testEmail}`);
+    results.emailsSent.verify = await sendEmail(testEmail, 'verify', { otp: '123456', name: 'Test User' });
+    console.log(`Sending test reset email to ${testEmail}`);
+    results.emailsSent.reset = await sendEmail(testEmail, 'reset', { otp: '654321', name: 'Test User' });
+    
+    res.json({
+      success: true,
+      message: 'Test emails sent successfully (check console for details)',
+      data: results
+    });
+  } catch (error) {
+    console.error('❌ Test email endpoint failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send test emails',
+      error: error.message
+    });
+  }
+});
 
 // Auth routes with rate limiting!
 app.use('/api/auth', authLimiter, authRoutes);
