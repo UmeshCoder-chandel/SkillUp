@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Text,
   StyleSheet,
@@ -15,12 +15,38 @@ import { COLORS } from '../utils/constants';
 
 export default function OTPScreen({ route, navigation }) {
   const dispatch = useDispatch();
-  const { error, pendingEmail, successMessage } = useSelector((s) => s.auth);
+  const { error, pendingEmail, successMessage, isAuthenticated } = useSelector((s) => s.auth);
   const [email, setEmail] = useState(route.params?.email || pendingEmail || '');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownTimerRef = useRef(null);
+
+  // Navigate when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    }
+  }, [isAuthenticated, navigation]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      cooldownTimerRef.current = setTimeout(() => {
+        setCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearTimeout(cooldownTimerRef.current);
+      }
+    };
+  }, [cooldown]);
 
   const handleVerify = async () => {
     setLocalError('');
@@ -45,11 +71,15 @@ export default function OTPScreen({ route, navigation }) {
       setLocalError('Enter your email first.');
       return;
     }
+    if (cooldown > 0) {
+      return;
+    }
     setResending(true);
     dispatch(clearError());
     dispatch(clearSuccess());
     await dispatch(resendOTP({ email }));
     setResending(false);
+    setCooldown(60); // 60 second cooldown
   };
 
   const displayError = localError || error;
@@ -90,8 +120,10 @@ export default function OTPScreen({ route, navigation }) {
 
           <Button title="Verify OTP" onPress={handleVerify} loading={loading} style={{ marginTop: 8 }} />
 
-          <TouchableOpacity onPress={handleResend} disabled={resending}>
-            <Text style={styles.resend}>{resending ? 'Sending...' : 'Resend OTP'}</Text>
+          <TouchableOpacity onPress={handleResend} disabled={resending || cooldown > 0}>
+            <Text style={[styles.resend, (resending || cooldown > 0) && styles.resendDisabled]}>
+              {resending ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -110,4 +142,5 @@ const styles = StyleSheet.create({
   error: { color: COLORS.error, marginBottom: 12, lineHeight: 22 },
   success: { color: COLORS.success, marginBottom: 12, lineHeight: 22 },
   resend: { color: COLORS.primary, textAlign: 'center', marginTop: 20, fontWeight: '600', fontSize: 15 },
+  resendDisabled: { color: COLORS.textSecondary, opacity: 0.5 },
 });

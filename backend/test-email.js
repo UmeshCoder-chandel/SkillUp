@@ -1,38 +1,45 @@
 require('dotenv').config();
-const { sendEmail } = require('./src/services/email');
+const { sendEmail, isEmailConfigured, transporter } = require('./src/services/email');
 
 async function testEmail() {
-  console.log('Testing email sending...');
+  console.log('=== Email Service Test ===');
+  console.log('Is Email Configured:', isEmailConfigured);
   
-  // Test OTP email
-  const otpResult = await sendEmail('umeshchandel551@gmail.com', 'otpVerification', { 
+  // Test transporter verify
+  if (transporter) {
+    console.log('\nTesting SMTP connection...');
+    try {
+      const verifyResult = await transporter.verify();
+      console.log('✅ SMTP Connection Verified:', verifyResult);
+    } catch (err) {
+      console.error('❌ SMTP Connection Failed:', err.message);
+    }
+  }
+  
+  // Test verification email
+  console.log('\nTesting verification email...');
+  const verifyResult = await sendEmail('umeshchandel551@gmail.com', 'verify', { 
     otp: '123456', 
     name: 'Test User' 
   });
-  console.log('OTP email result:', otpResult);
+  console.log('Verification email result:', verifyResult ? '✅ Sent' : '❌ Failed');
   
   // Test password reset email
-  const resetResult = await sendEmail('umeshchandel551@gmail.com', 'passwordReset', { 
+  console.log('\nTesting password reset email...');
+  const resetResult = await sendEmail('umeshchandel551@gmail.com', 'reset', { 
     otp: '654321', 
     name: 'Test User' 
   });
-  console.log('Reset email result:', resetResult);
+  console.log('Reset email result:', resetResult ? '✅ Sent' : '❌ Failed');
   
   // Test welcome email
+  console.log('\nTesting welcome email...');
   const welcomeResult = await sendEmail('umeshchandel551@gmail.com', 'welcome', { 
     name: 'Test User' 
   });
-  console.log('Welcome email result:', welcomeResult);
+  console.log('Welcome email result:', welcomeResult ? '✅ Sent' : '❌ Failed');
   
-  // Test account notification email
-  const notificationResult = await sendEmail('umeshchandel551@gmail.com', 'accountNotification', { 
-    name: 'Test User',
-    subject: 'Account Update',
-    message: 'Your account has been updated successfully.'
-  });
-  console.log('Notification email result:', notificationResult);
-  
-  console.log('Test complete!');
+  console.log('\n=== Test Complete! ===');
 }
 
 testEmail().catch(console.error);

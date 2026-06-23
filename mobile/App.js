@@ -74,6 +74,21 @@ function AppContent() {
     prepareApp();
   }, [dispatch]);
 
+  // Force hide splash screen after a timeout (max 15 seconds)
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      console.warn('Splash screen timeout - forcing hide');
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn('Error hiding splash screen on timeout:', e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }, 15000);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   // Hide splash screen when everything is ready
   useEffect(() => {
     async function hideSplashIfReady() {

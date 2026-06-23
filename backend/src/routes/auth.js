@@ -50,21 +50,21 @@ router.get('/me', protect, authController.getMe);
 
 router.post(
   '/forgot-password',
-  (req, res, next) => {
-    console.log('=== FORGOT PASSWORD ROUTE HIT ===');
-    console.log('Request Body:', req.body);
-    next();
-  },
+  authLimiter,
+  [body('email').isEmail().withMessage('Valid email required')],
+  validate,
   authController.forgotPassword
 );
 
 router.post(
   '/reset-password',
-  (req, res, next) => {
-    console.log('=== RESET PASSWORD ROUTE HIT ===');
-    console.log('Request Body:', req.body);
-    next();
-  },
+  authLimiter,
+  [
+    body('email').isEmail().withMessage('Valid email required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('password').isLength({ min: 6 }).withMessage('Password min 6 characters'),
+  ],
+  validate,
   authController.resetPassword
 );
 

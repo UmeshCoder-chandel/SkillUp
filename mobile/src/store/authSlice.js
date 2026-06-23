@@ -47,7 +47,10 @@ export const registerUser = createAsyncThunk('auth/register', async (userData, {
 
 export const verifyOTP = createAsyncThunk('auth/verifyOTP', async ({ email, otp }, { rejectWithValue }) => {
   try {
-    const { data } = await api.post('/auth/verify-otp', { email: normalizeEmail(email), otp: otp.trim() });
+    const { data } = await api.post('/auth/verify-otp', {
+      email: normalizeEmail(email),
+      otp: otp.trim(),
+    });
     await storage.setAccessToken(data.data.accessToken);
     await storage.setRefreshToken(data.data.refreshToken);
     return data.data.user;
@@ -58,7 +61,9 @@ export const verifyOTP = createAsyncThunk('auth/verifyOTP', async ({ email, otp 
 
 export const resendOTP = createAsyncThunk('auth/resendOTP', async ({ email }, { rejectWithValue }) => {
   try {
-    const { data } = await api.post('/auth/resend-otp', { email: normalizeEmail(email) });
+    const { data } = await api.post('/auth/resend-otp', {
+      email: normalizeEmail(email),
+    });
     return data.message;
   } catch (err) {
     return rejectWithValue(getAuthError(err, 'Could not resend OTP'));
@@ -105,9 +110,15 @@ export const loadUser = createAsyncThunk('auth/loadUser', async () => {
   const token = await storage.getAccessToken();
   if (!token) return null;
   try {
-    const { data } = await api.get('/auth/me');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for this call
+    const { data } = await api.get('/auth/me', {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     return data.data;
-  } catch {
+  } catch (err) {
+    console.warn('loadUser failed:', err.message);
     await storage.clearTokens();
     return null;
   }

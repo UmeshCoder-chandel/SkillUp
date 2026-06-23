@@ -1,10 +1,12 @@
 import axios from 'axios';
-import { API_URL } from '../utils/constants';
+import Constants from 'expo-constants';
 import { storage } from '../utils/storage';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || 'https://skillup-dwny.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 120000, // 120 seconds - super long timeout for Render
+  timeout: 15000, // 15 seconds reasonable timeout
 });
 
 // Request interceptor with logging

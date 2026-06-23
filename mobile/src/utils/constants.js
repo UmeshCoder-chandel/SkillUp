@@ -1,6 +1,4 @@
-import Constants from 'expo-constants';
-
-export const API_URL = 'https://skillup-dwny.onrender.com/api';
+// API_URL is now defined in src/services/api.js
 
 export const darkColors = {
   background: '#060B18',

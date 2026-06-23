@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, clearError } from '../store/authSlice';
 import { Button, IconInput } from '../components/UI';
 import GoogleSignInButton from '../components/GoogleSignInButton';
-import { COLORS, API_URL } from '../utils/constants';
+import { COLORS } from '../utils/constants';
 
 export default function LoginScreen({ navigation }) {
   const dispatch = useDispatch();
