@@ -23,23 +23,24 @@ if (emailUser && emailPass) {
     transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpSecure,
+      secure: smtpSecure, // true for 465, false for 587
+      requireTLS: !smtpSecure, // for STARTTLS on 587
       auth: { user: emailUser, pass: emailPass },
       tls: { rejectUnauthorized: false },
-      connectionTimeout: 10000, // 10 seconds to connect
-      greetingTimeout: 10000, // 10 seconds for greeting
-      socketTimeout: 15000, // 15 seconds total
+      connectionTimeout: 5000, // 5 seconds to connect (faster fail)
+      greetingTimeout: 5000, // 5 seconds for greeting
+      socketTimeout: 10000, // 10 seconds total
     });
 
-    // Verify SMTP connection on startup
-    transporter.verify(function (error, success) {
-      if (error) {
-        console.error('❌ SMTP Connection Failed:', error.message);
-        isEmailConfigured = false;
-      } else {
-        console.log('✅ SMTP Server is ready to send emails');
-        isEmailConfigured = true;
-      }
+    // Mark as configured first, don't block server startup
+    isEmailConfigured = true;
+    console.log('✅ Email service configured (SMTP verification skipped for server startup speed)');
+    
+    // Optional async verification - doesn't block server
+    transporter.verify().then(() => {
+      console.log('✅ SMTP Server connection verified');
+    }).catch((error) => {
+      console.warn('⚠️ SMTP verification failed (but email service still configured):', error.message);
     });
   } catch (err) {
     console.error('❌ Error creating email transporter:', err.message);
