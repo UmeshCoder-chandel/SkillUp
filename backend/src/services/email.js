@@ -10,13 +10,21 @@ const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
 const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
 const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
 const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
-const smtpSecure = (process.env.SMTP_SECURE || process.env.EMAIL_SECURE) === 'true';
+
+// Auto-detect secure setting based on port if not explicitly set
+let smtpSecure;
+if (process.env.SMTP_SECURE || process.env.EMAIL_SECURE) {
+  smtpSecure = (process.env.SMTP_SECURE || process.env.EMAIL_SECURE) === 'true';
+} else {
+  smtpSecure = smtpPort === 465; // true for port 465, false otherwise
+}
 
 console.log('=== Email Service Initialization ===');
 console.log('Email User:', emailUser ? emailUser : 'NOT SET');
 console.log('SMTP Host:', smtpHost);
 console.log('SMTP Port:', smtpPort);
 console.log('SMTP Secure:', smtpSecure);
+console.log('⚠️ Note: Render blocks outbound SMTP by default - consider using SendGrid/Mailgun/Postmark API instead of SMTP for production');
 
 if (emailUser && emailPass) {
   try {
