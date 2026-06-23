@@ -251,7 +251,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   console.log('Sending response...');
   res.json({
     success: true,
-    message: 'If an account exists for this email, a reset code has been sent.',
+    message: 'If an account exists for this email, check your inbox and spam folder for the reset code.',
   });
   console.log('=== FORGOT PASSWORD CONTROLLER FINISHED ===');
 });
