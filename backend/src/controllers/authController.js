@@ -172,25 +172,30 @@ exports.googleLogin = asyncHandler(async (req, res) => {
   console.log('=== GOOGLE LOGIN CONTROLLER STARTED ===');
   const { idToken } = req.body;
   const decoded = await verifyFirebaseToken(idToken);
-  console.log('Decoded Firebase UID:', decoded.uid);
-  console.log('Decoded Firebase email:', decoded.email);
+  console.log('Decoded Google Payload:', decoded);
+  
+  // Google OAuth payload fields: sub (subject/uid), email, name, picture
+  const googleId = decoded.sub;
+  const email = decoded.email;
+  const name = decoded.name || email.split('@')[0];
+  const picture = decoded.picture || '';
 
-  let user = await User.findOne({ firebaseUid: decoded.uid });
+  let user = await User.findOne({ firebaseUid: googleId });
   if (!user) {
-    user = await User.findOne({ email: decoded.email });
+    user = await User.findOne({ email });
     if (user) {
       console.log('Found existing user by email, linking Google account');
-      user.firebaseUid = decoded.uid;
+      user.firebaseUid = googleId;
       user.isVerified = true;
-      if (decoded.picture) user.avatar = decoded.picture;
+      if (picture) user.avatar = picture;
       await user.save();
     } else {
       console.log('Creating new user with Google account');
       user = await User.create({
-        name: decoded.name || decoded.email.split('@')[0],
-        email: decoded.email,
-        firebaseUid: decoded.uid,
-        avatar: decoded.picture || '',
+        name,
+        email,
+        firebaseUid: googleId,
+        avatar: picture,
         isVerified: true,
       });
     }

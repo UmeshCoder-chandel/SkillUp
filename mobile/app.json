@@ -30,8 +30,7 @@
         "image": "./assets/splashscreen_logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#F8FAFC"
-      },
-      "usesCleartextTraffic": true
+      }
     },
     "extra": {
       "apiUrl": "https://skillup-dwny.onrender.com/api",

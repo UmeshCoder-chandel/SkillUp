@@ -1,37 +1,31 @@
-const admin = require('firebase-admin');
+const { OAuth2Client } = require('google-auth-library');
 
-let firebaseApp = null;
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client();
 
-const initFirebase = () => {
-  if (firebaseApp) return firebaseApp;
-
-  if (!process.env.FIREBASE_PROJECT_ID) {
-    console.warn('Firebase not configured - Google login disabled');
-    return null;
-  }
-
+const verifyGoogleToken = async (idToken) => {
   try {
-    firebaseApp = admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: [
+        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+        process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      ].filter(Boolean),
     });
-    console.log('Firebase Admin initialized');
+    return ticket.getPayload();
   } catch (error) {
-    console.warn('Firebase init failed:', error.message);
+    console.error('Google token verification failed:', error);
+    throw new Error('Invalid Google token');
   }
-
-  return firebaseApp;
 };
 
-const verifyFirebaseToken = async (idToken) => {
-  initFirebase();
-  if (!firebaseApp) {
-    throw new Error('Firebase not configured');
-  }
-  return admin.auth().verifyIdToken(idToken);
+// Keep the old name for backwards compatibility
+const initFirebase = () => {
+  console.log('Firebase not used - using Google OAuth directly');
+  return null;
 };
 
-module.exports = { initFirebase, verifyFirebaseToken };
+const verifyFirebaseToken = verifyGoogleToken;
+
+module.exports = { initFirebase, verifyFirebaseToken, verifyGoogleToken };
