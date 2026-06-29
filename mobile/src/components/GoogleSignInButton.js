@@ -13,13 +13,13 @@ import {
 
 export default function GoogleSignInButton({ loading }) {
   const dispatch = useDispatch();
-  const [request, response, promptAsync] = useGoogleAuthRequest();
+  const configured = isGoogleAuthConfigured();
+  const [request, response, promptAsync] = configured ? useGoogleAuthRequest() : [null, null, () => Promise.resolve()];
   const [googleLoading, setGoogleLoading] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
-  const configured = isGoogleAuthConfigured();
 
   useEffect(() => {
-    if (!response) return;
+    if (!response || !configured) return;
 
     (async () => {
       setGoogleLoading(true);
@@ -28,17 +28,23 @@ export default function GoogleSignInButton({ loading }) {
         const idToken = await getFirebaseIdTokenFromGoogleResponse(response);
         await dispatch(googleLogin(idToken)).unwrap();
       } catch (err) {
+        console.error('[GoogleSignInButton] Error during Google sign in:', err);
         dispatch(setAuthError(typeof err === 'string' ? err : err.message || 'Google sign-in failed'));
       } finally {
         setGoogleLoading(false);
         setSessionActive(false);
       }
     })();
-  }, [dispatch, response]);
+  }, [dispatch, response, configured]);
 
   const handlePress = async () => {
     if (!configured) {
-      dispatch(setAuthError('Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to mobile/.env from Firebase Console'));
+      dispatch(setAuthError('Google authentication is not configured. Please use email/password login.'));
+      return;
+    }
+
+    if (!promptAsync) {
+      dispatch(setAuthError('Google authentication is not available.'));
       return;
     }
 
@@ -49,10 +55,15 @@ export default function GoogleSignInButton({ loading }) {
     try {
       await promptAsync();
     } catch (err) {
-      console.warn('Google auth prompt error:', err);
+      console.warn('[GoogleSignInButton] Google auth prompt error:', err);
       setSessionActive(false);
     }
   };
+
+  // Don't render the button at all if Google auth isn't configured
+  if (!configured) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>

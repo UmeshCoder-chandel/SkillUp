@@ -34,6 +34,9 @@
     },
     "extra": {
       "apiUrl": "https://skillup-dwny.onrender.com/api",
+      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "461555492381-stutvtqq8ovgs14i3pr8v89n65nod5ru.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "461555492381-2u27hogc5v5cagiaa8vbcfeiks03rs27.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "461555492381-vl6lg3op0dt7fm8h2qoekv0ltr2tfc8j.apps.googleusercontent.com",
       "eas": {
         "projectId": "05dad788-e2ca-4225-bfc1-b88ac1eb82a3"
       }
