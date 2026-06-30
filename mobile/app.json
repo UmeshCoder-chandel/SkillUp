@@ -1,12 +1,14 @@
 {
   "expo": {
     "name": "SkillLearn",
+    "owner": "chandelumesh322",
     "slug": "skilllearn",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "skilllearn",
     "newArchEnabled": true,
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/splashscreen_logo.png",
     "splash": {
       "image": "./assets/splashscreen_logo.png",
       "resizeMode": "contain",
@@ -30,7 +32,10 @@
         "image": "./assets/splashscreen_logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#F8FAFC"
-      }
+      },
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 24
     },
     "extra": {
       "apiUrl": "https://skillup-dwny.onrender.com/api",
@@ -46,7 +51,6 @@
       "expo-asset",
       "expo-font",
       "expo-splash-screen"
-    ],
-    "owner": "chandelumesh322"
+    ]
   }
 }

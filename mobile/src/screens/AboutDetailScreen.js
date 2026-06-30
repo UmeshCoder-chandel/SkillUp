@@ -16,7 +16,7 @@ export default function AboutDetailScreen() {
         </View>
         <View style={styles.card}>
           <Text style={styles.label}>Built with</Text>
-          <Text style={styles.value}>React Native / Expo / Firebase</Text>
+          <Text style={styles.value}>React Native / Expo</Text>
         </View>
         <View style={styles.card}>
           <Text style={styles.label}>Support</Text>

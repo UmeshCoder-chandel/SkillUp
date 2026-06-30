@@ -11,7 +11,6 @@ export default function VideosPage() {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [creatorId, setCreatorId] = useState('');
-  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [videoFile, setVideoFile] = useState(null);
 
   const load = () => {
@@ -40,11 +39,6 @@ export default function VideosPage() {
     formData.append('category', categoryId);
     formData.append('creator', creatorId);
     formData.append('video', videoFile);
-    
-    // Add thumbnail only if present
-    if (thumbnailFile) {
-      formData.append('thumbnail', thumbnailFile);
-    }
 
     await api.post('/admin/videos', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -54,7 +48,6 @@ export default function VideosPage() {
     setDescription('');
     setCategoryId('');
     setCreatorId('');
-    setThumbnailFile(null);
     setVideoFile(null);
     load();
   };
@@ -88,19 +81,15 @@ export default function VideosPage() {
         </Box>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <Button variant="outlined" component="label">
-            Upload Thumbnail
-            <input type="file" accept="image/*" hidden onChange={(e) => setThumbnailFile(e.target.files[0])} />
-          </Button>
-          <Button variant="outlined" component="label">
             Upload Video
             <input type="file" accept="video/*" hidden onChange={(e) => setVideoFile(e.target.files[0])} />
           </Button>
           <Button variant="contained" onClick={handleCreate} sx={{ bgcolor: '#6C63FF' }}>Add Video</Button>
         </Box>
-        {(thumbnailFile || videoFile) && (
+        {videoFile && (
           <Box sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Selected: {thumbnailFile?.name || 'No thumbnail'} • {videoFile?.name || 'No video'}
+              Selected: {videoFile?.name || 'No video'}
             </Typography>
           </Box>
         )}

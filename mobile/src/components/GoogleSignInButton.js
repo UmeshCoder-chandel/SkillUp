@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,65 +6,96 @@ import { Button } from './UI';
 import { COLORS } from '../utils/constants';
 import { googleLogin, clearError, setAuthError } from '../store/authSlice';
 import {
-  getFirebaseIdTokenFromGoogleResponse,
+  getGoogleIdTokenFromResponse,
   isGoogleAuthConfigured,
   useGoogleAuthRequest,
 } from '../services/googleAuth';
+import api from '../services/api';
 
 export default function GoogleSignInButton({ loading }) {
   const dispatch = useDispatch();
   const configured = isGoogleAuthConfigured();
   const [request, response, promptAsync] = configured ? useGoogleAuthRequest() : [null, null, () => Promise.resolve()];
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [sessionActive, setSessionActive] = useState(false);
-
-  useEffect(() => {
-    if (!response || !configured) return;
-
-    (async () => {
-      setGoogleLoading(true);
-      dispatch(clearError());
-      try {
-        const idToken = await getFirebaseIdTokenFromGoogleResponse(response);
-        await dispatch(googleLogin(idToken)).unwrap();
-      } catch (err) {
-        console.error('[GoogleSignInButton] Error during Google sign in:', err);
-        dispatch(setAuthError(typeof err === 'string' ? err : err.message || 'Google sign-in failed'));
-      } finally {
-        setGoogleLoading(false);
-        setSessionActive(false);
-      }
-    })();
-  }, [dispatch, response, configured]);
 
   const handlePress = async () => {
+    console.log('[GoogleSignInButton] handlePress called');
+    
     if (!configured) {
+      console.warn('[GoogleSignInButton] Google auth not configured');
       dispatch(setAuthError('Google authentication is not configured. Please use email/password login.'));
       return;
     }
 
     if (!promptAsync) {
+      console.error('[GoogleSignInButton] promptAsync function not available');
       dispatch(setAuthError('Google authentication is not available.'));
       return;
     }
 
-    if (sessionActive || googleLoading || loading) return;
+    if (googleLoading || loading) {
+      console.log('[GoogleSignInButton] Already loading, ignoring press');
+      return;
+    }
 
+    console.log('[GoogleSignInButton] Starting Google auth prompt...');
     dispatch(clearError());
-    setSessionActive(true);
+    setGoogleLoading(true);
+    
     try {
-      await promptAsync();
-    } catch (err) {
-      console.warn('[GoogleSignInButton] Google auth prompt error:', err);
-      setSessionActive(false);
+      console.log('[GoogleSignInButton] Calling promptAsync...');
+      const result = await promptAsync();
+      console.log('[GoogleSignInButton] promptAsync returned:', JSON.stringify(result, null, 2));
+      
+      // Handle different response types
+      if (result?.type === 'dismiss') {
+        console.log('[GoogleSignInButton] User dismissed Google login');
+        return;
+      }
+      
+      if (result?.type === 'cancel') {
+        console.log('[GoogleSignInButton] User cancelled Google login');
+        return;
+      }
+      
+      if (result?.type === 'success') {
+        console.log('[GoogleSignInButton] Google auth successful!');
+        const idToken = await getGoogleIdTokenFromResponse(result);
+        console.log('[GoogleSignInButton] Got idToken, sending to backend...');
+        const loginResult = await dispatch(googleLogin(idToken)).unwrap();
+        console.log('[GoogleSignInButton] Login successful!', loginResult);
+      } else {
+        console.warn('[GoogleSignInButton] Unexpected response type:', result?.type);
+        dispatch(setAuthError('Google sign-in failed with an unexpected error'));
+      }
+    } catch (error) {
+      console.error('[GoogleSignInButton] Error during Google login:', error);
+      console.error('[GoogleSignInButton] Error stack:', error.stack);
+      
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : error.message || 'Google sign-in failed';
+      
+      if (errorMessage.includes('cancelled') || errorMessage.includes('dismissed')) {
+        console.log('[GoogleSignInButton] User cancelled, not showing error');
+        return;
+      }
+      
+      console.log('[GoogleSignInButton] Setting error message:', errorMessage);
+      dispatch(setAuthError(errorMessage));
+    } finally {
+      console.log('[GoogleSignInButton] Flow complete, resetting states');
+      setGoogleLoading(false);
     }
   };
 
   // Don't render the button at all if Google auth isn't configured
   if (!configured) {
+    console.log('[GoogleSignInButton] Google auth not configured, hiding button');
     return null;
   }
 
+  console.log('[GoogleSignInButton] Rendering Google sign-in button');
   return (
     <View style={styles.container}>
       <View style={styles.dividerRow}>

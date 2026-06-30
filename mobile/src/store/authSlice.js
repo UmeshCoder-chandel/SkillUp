@@ -96,13 +96,30 @@ export const resetPassword = createAsyncThunk(
 );
 
 export const googleLogin = createAsyncThunk('auth/google', async (idToken, { rejectWithValue }) => {
+  console.log('[AuthSlice] googleLogin called with idToken:', !!idToken ? `idToken present (length ${idToken.length})` : 'NO idToken!');
+  
   try {
+    console.log('[AuthSlice] Sending request to /auth/google...');
     const { data } = await api.post('/auth/google', { idToken });
+    console.log('[AuthSlice] Backend response:', JSON.stringify(data, null, 2));
+    
+    console.log('[AuthSlice] Storing access token...');
     await storage.setAccessToken(data.data.accessToken);
+    
+    console.log('[AuthSlice] Storing refresh token...');
     await storage.setRefreshToken(data.data.refreshToken);
+    
+    console.log('[AuthSlice] googleLogin completed successfully!');
     return data.data.user;
   } catch (err) {
-    return rejectWithValue(getAuthError(err, 'Google login failed'));
+    console.error('[AuthSlice] googleLogin error:', err);
+    console.error('[AuthSlice] Error response:', err.response?.data);
+    console.error('[AuthSlice] Error stack:', err.stack);
+    
+    const message = getAuthError(err, 'Google sign-in failed');
+    console.error('[AuthSlice] Rejecting with message:', message);
+    
+    return rejectWithValue(message);
   }
 });
 
