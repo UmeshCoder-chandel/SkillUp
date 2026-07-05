@@ -294,6 +294,10 @@ exports.rejectCreatorRequest = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Creator request rejected', data: user.toPublicJSON() });
 });
 
+exports.getAdminMe = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: req.user.toPublicJSON() });
+});
+
 exports.adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email, role: 'admin' }).select('+password');

@@ -35,6 +35,7 @@ router.post('/login', adminController.adminLogin);
 
 router.use(protect, authorize('admin'));
 
+router.get('/me', adminController.getAdminMe);
 router.get('/dashboard', adminController.getDashboardStats);
 router.get('/analytics', adminController.getAnalytics);
 router.get('/reports', adminController.getReports);

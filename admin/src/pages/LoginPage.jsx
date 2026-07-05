@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Box, Paper, TextField, Button, Typography, Alert, IconButton, InputAdornment } from '@mui/material';
+import { Box, Paper, TextField, Button, Typography, Alert, IconButton, InputAdornment, CircularProgress } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { adminLogin } from '../store/authSlice';
@@ -9,7 +9,7 @@ import { adminLogin } from '../store/authSlice';
 export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector((s) => s.auth);
+  const { loading, error, isAuthenticated, initializing } = useSelector((s) => s.auth);
   const [email, setEmail] = useState('admin@skilllearn.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +22,15 @@ export default function LoginPage() {
     e.preventDefault();
     dispatch(adminLogin({ email, password }));
   };
+
+  if (initializing) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: '#1a1a2e' }}>
+        <CircularProgress sx={{ color: '#6C63FF' }} />
+        <Typography variant="body1" sx={{ mt: 2, color: 'white' }}>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#1a1a2e' }}>
