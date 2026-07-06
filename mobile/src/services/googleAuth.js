@@ -91,33 +91,7 @@ export function useGoogleAuthRequest() {
       !!request
     );
 
-    const signIn = async () => {
-      try {
-        console.log(
-          '[GoogleAuth] Starting Google Login...'
-        );
-
-        const result = await promptAsync({
-          useProxy: true,
-        });
-
-        console.log(
-          '[GoogleAuth] Prompt Result:',
-          JSON.stringify(result, null, 2)
-        );
-
-        return result;
-      } catch (error) {
-        console.error(
-          '[GoogleAuth] promptAsync Error:',
-          error
-        );
-
-        throw error;
-      }
-    };
-
-    return [request, response, signIn];
+    return [request, response, promptAsync];
   } catch (error) {
     console.error(
       '[GoogleAuth] Initialization Error:',
