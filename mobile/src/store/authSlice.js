@@ -1,15 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../services/api';
+import api, { checkServerHealth } from '../services/api';
 import { storage } from '../utils/storage';
 
 const getAuthError = (err, fallback) => {
-  console.log('DEBUG ERROR:', JSON.stringify(err, null, 2));
-  console.log('DEBUG ERROR NAME:', err.name);
-  console.log('DEBUG ERROR MESSAGE:', err.message);
-  console.log('DEBUG ERROR RESPONSE:', err.response);
-  console.log('DEBUG ERROR REQUEST:', err.request);
+  console.error('[AuthSlice] DEBUG ERROR:', JSON.stringify(err, null, 2));
   if (!err.response) {
-    return `Cannot reach server. Error: ${err.message}. Check that backend is running and EXPO_PUBLIC_API_URL is correct.`;
+    return `Cannot reach server. Error: ${err.message}. Check your internet connection.`;
   }
   return err.response?.data?.message || fallback;
 };
@@ -17,15 +13,26 @@ const getAuthError = (err, fallback) => {
 const normalizeEmail = (email) => email.trim().toLowerCase();
 
 export const loginUser = createAsyncThunk('auth/login', async ({ email, password }, { rejectWithValue }) => {
+  console.log('[AuthSlice] === Attempting login ===');
+  
   try {
+    // First check server health
+    console.log('[AuthSlice] Checking server health before login...');
+    await checkServerHealth(3, 1500);
+    
     const { data } = await api.post('/auth/login', {
       email: normalizeEmail(email),
       password,
     });
+    
+    console.log('[AuthSlice] Login successful, storing tokens');
     await storage.setAccessToken(data.data.accessToken);
     await storage.setRefreshToken(data.data.refreshToken);
+    
+    console.log('[AuthSlice] Tokens stored, returning user');
     return data.data.user;
   } catch (err) {
+    console.error('[AuthSlice] Login failed:', err);
     const message = getAuthError(err, 'Login failed');
     const needsVerification = err.response?.status === 403;
     return rejectWithValue({ message, needsVerification, email: normalizeEmail(email) });
@@ -96,58 +103,58 @@ export const resetPassword = createAsyncThunk(
 );
 
 export const googleLogin = createAsyncThunk('auth/google', async (idToken, { rejectWithValue }) => {
-  console.log('[AuthSlice] googleLogin called with idToken:', !!idToken ? `idToken present (length ${idToken.length})` : 'NO idToken!');
+  console.log('[AuthSlice] === Google login called ===');
   
   try {
-    console.log('[AuthSlice] Sending request to /auth/google...');
+    // Check server health first
+    await checkServerHealth(3, 1500);
+    
     const { data } = await api.post('/auth/google', { idToken });
-    console.log('[AuthSlice] Backend response:', JSON.stringify(data, null, 2));
     
-    console.log('[AuthSlice] Storing access token...');
+    console.log('[AuthSlice] Google login successful, storing tokens');
     await storage.setAccessToken(data.data.accessToken);
-    
-    console.log('[AuthSlice] Storing refresh token...');
     await storage.setRefreshToken(data.data.refreshToken);
     
-    console.log('[AuthSlice] googleLogin completed successfully!');
     return data.data.user;
   } catch (err) {
-    console.error('[AuthSlice] googleLogin error:', err);
-    console.error('[AuthSlice] Error response:', err.response?.data);
-    console.error('[AuthSlice] Error stack:', err.stack);
-    
+    console.error('[AuthSlice] Google login error:', err);
     const message = getAuthError(err, 'Google sign-in failed');
-    console.error('[AuthSlice] Rejecting with message:', message);
-    
     return rejectWithValue(message);
   }
 });
 
 export const loadUser = createAsyncThunk('auth/loadUser', async () => {
+  console.log('[AuthSlice] === Loading user from storage ===');
+  
   const token = await storage.getAccessToken();
-  if (!token) return null;
+  if (!token) {
+    console.log('[AuthSlice] No token found in storage');
+    return null;
+  }
+  
+  console.log('[AuthSlice] Token found, verifying with server...');
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for this call
-    const { data } = await api.get('/auth/me', {
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+    const { data } = await api.get('/auth/me');
+    console.log('[AuthSlice] User loaded successfully:', data.data);
     return data.data;
   } catch (err) {
-    console.warn('loadUser failed:', err.message);
+    console.warn('[AuthSlice] Failed to load user, clearing tokens:', err.message);
     await storage.clearTokens();
     return null;
   }
 });
 
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
+  console.log('[AuthSlice] === Logging out ===');
+  
   try {
     await api.post('/auth/logout');
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('[AuthSlice] Logout API call failed, but clearing tokens anyway:', err);
   }
+  
   await storage.clearTokens();
+  console.log('[AuthSlice] Tokens cleared');
 });
 
 const authSlice = createSlice({
@@ -182,16 +189,19 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
+        console.log('[AuthSlice] Login pending');
         state.error = null;
         state.needsVerification = false;
         state.unverifiedEmail = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        console.log('[AuthSlice] Login fulfilled, user:', action.payload);
         state.user = action.payload;
         state.isAuthenticated = true;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        console.error('[AuthSlice] Login rejected:', action.payload);
         const payload = action.payload;
         if (typeof payload === 'object' && payload?.needsVerification) {
           state.error = payload.message;
@@ -266,18 +276,22 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(loadUser.pending, (state) => {
+        console.log('[AuthSlice] loadUser pending');
         state.initializing = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
+        console.log('[AuthSlice] loadUser fulfilled, user:', action.payload);
         state.initializing = false;
         state.user = action.payload;
         state.isAuthenticated = !!action.payload;
       })
       .addCase(loadUser.rejected, (state) => {
+        console.log('[AuthSlice] loadUser rejected');
         state.initializing = false;
         state.isAuthenticated = false;
       })
       .addCase(logoutUser.fulfilled, (state) => {
+        console.log('[AuthSlice] logoutUser fulfilled');
         state.user = null;
         state.isAuthenticated = false;
       });
