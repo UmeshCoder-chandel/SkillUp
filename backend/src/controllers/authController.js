@@ -58,7 +58,7 @@ exports.register = asyncHandler(async (req, res) => {
   // Don't send tokens - user needs to verify first
   res.json({
     success: true,
-    message: 'Registration successful! Please verify your email with the OTP sent.',
+    message: 'Registration successful! Please verify your email with the OTP sent.check your inbox and spam folder.',
     data: { email: user.email }
   });
   console.log('=== REGISTER CONTROLLER FINISHED ===');
