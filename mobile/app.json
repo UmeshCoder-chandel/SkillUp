@@ -47,8 +47,7 @@
       "expo-secure-store",
       "expo-asset",
       "expo-font",
-      "expo-splash-screen",
-      "@react-native-google-signin/google-signin"
+      "expo-splash-screen"
     ]
   }
 }

@@ -28,11 +28,18 @@ import HelpDetailScreen from '../screens/HelpDetailScreen';
 import AboutDetailScreen from '../screens/AboutDetailScreen';
 import WatchScreen from '../screens/WatchScreen';
 import UploadVideoScreen from '../screens/UploadVideoScreen';
+import BecomeCreatorScreen from '../screens/BecomeCreatorScreen';
 import MentorScreen from '../screens/MentorScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+function CreateScreenWrapper() {
+  const user = useSelector((s) => s.auth.user);
+  const isCreator = user?.role === 'creator' || user?.role === 'admin';
+  return isCreator ? <UploadVideoScreen /> : <BecomeCreatorScreen />;
+}
 
 function MainTabs() {
   const { colors, isDark } = useTheme();
@@ -72,7 +79,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Discover" component={CategoriesScreen} />
-      <Tab.Screen name="Create" component={UploadVideoScreen} />
+      <Tab.Screen name="Create" component={CreateScreenWrapper} />
       <Tab.Screen name="Analytics" component={DashboardScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -120,6 +127,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Watch" component={WatchScreen} />
             <Stack.Screen name="Comments" component={CommentsScreen} />
             <Stack.Screen name="UploadVideo" component={UploadVideoScreen} />
+            <Stack.Screen name="BecomeCreator" component={BecomeCreatorScreen} />
           </>
         )}
       </Stack.Navigator>

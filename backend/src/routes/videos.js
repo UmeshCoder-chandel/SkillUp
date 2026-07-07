@@ -20,5 +20,13 @@ router.post(
   validate,
   videoController.addComment
 );
+router.put(
+  '/:id/comments/:commentId',
+  protect,
+  [body('text').trim().notEmpty().withMessage('Comment text required')],
+  validate,
+  videoController.updateComment
+);
+router.delete('/:id/comments/:commentId', protect, videoController.deleteComment);
 
 module.exports = router;

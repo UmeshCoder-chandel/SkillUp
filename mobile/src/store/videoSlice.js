@@ -8,7 +8,8 @@ export const fetchFeed = createAsyncThunk('videos/fetchFeed', async ({ page = 1,
   return { videos: data.data, pagination: data.pagination, page };
 });
 
-export const likeVideo = createAsyncThunk('videos/like', async (videoId) => {
+export const likeVideo = createAsyncThunk('videos/like', async (videoId, { getState, rejectWithValue }) => {
+  // Optimistic update is handled in the reducer pending case
   const { data } = await api.post(`/videos/${videoId}/like`);
   return { videoId, ...data };
 });
@@ -52,11 +53,31 @@ const videoSlice = createSlice({
         state.loading = false;
         state.loadingMore = false;
       })
+      // Optimistic update for like
+      .addCase(likeVideo.pending, (state, action) => {
+        const video = state.feed.find((v) => v._id === action.meta.arg);
+        if (video) {
+          video.isLiked = !video.isLiked;
+          video.likeCount = video.isLiked 
+            ? (video.likeCount || 0) + 1 
+            : (video.likeCount || 1) - 1;
+        }
+      })
       .addCase(likeVideo.fulfilled, (state, action) => {
         const video = state.feed.find((v) => v._id === action.payload.videoId);
         if (video) {
           video.isLiked = action.payload.liked;
           video.likeCount = action.payload.likeCount;
+        }
+      })
+      .addCase(likeVideo.rejected, (state, action) => {
+        // Revert optimistic update on failure
+        const video = state.feed.find((v) => v._id === action.meta.arg);
+        if (video) {
+          video.isLiked = !video.isLiked;
+          video.likeCount = video.isLiked 
+            ? (video.likeCount || 0) + 1 
+            : (video.likeCount || 1) - 1;
         }
       });
   },

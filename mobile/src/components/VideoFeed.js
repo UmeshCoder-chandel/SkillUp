@@ -3,24 +3,30 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   FlatList,
   Share,
   Image,
   StatusBar,
   GestureResponderEvent,
+  useWindowDimensions,
 } from 'react-native';
 import { Video } from 'expo-av';
-import { useDispatch } from 'react-redux';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { formatCount } from '../utils/constants';
-import { likeVideo, saveVideo } from '../store/videoSlice';
+import { likeVideo, saveVideo, updateVideoInFeed } from '../store/videoSlice';
 import api from '../services/api';
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Extracted Component: ProfileInfo
 const ProfileInfo = memo(({ creator, colors, isFollowing, onFollow }) => (
@@ -60,17 +66,17 @@ const VideoDescription = memo(({ title, description, colors }) => {
 
   return (
     <View style={styles.descriptionContainer}>
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.title, { color: '#fff' }]}>{title}</Text>
       {description ? (
         <View>
           <Text 
-            style={[styles.description, { color: colors.text }]} 
+            style={[styles.description, { color: '#fff' }]} 
             numberOfLines={expanded ? undefined : 2}
           >
             {description}
           </Text>
           <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-            <Text style={[styles.seeMore, { color: colors.text }]}>
+            <Text style={[styles.seeMore, { color: '#fff' }]}>
               {expanded ? ' less' : ' more'}
             </Text>
           </TouchableOpacity>
@@ -86,7 +92,7 @@ const HashtagList = memo(({ category, colors }) => {
   if (category?.title) tags.push(`#${category.title}`);
 
   return (
-    <Text style={[styles.hashtags, { color: colors.text }]}>
+    <Text style={[styles.hashtags, { color: '#fff' }]}>
       {tags.join(' ')}
     </Text>
   );
@@ -155,7 +161,36 @@ const ActionButtons = memo(({ item, saved, commentCount, onLike, onSave, onShare
   );
 });
 
-const VideoItem = memo(({ item, isActive, onFollow }) => {
+const DoubleTapHeart = ({ visible, onComplete }) => {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      scale.value = withSpring(1, { damping: 15, stiffness: 150 });
+      opacity.value = withTiming(1, { duration: 200 }, (finished) => {
+        if (finished) {
+          opacity.value = withTiming(0, { duration: 400, delay: 300 }, () => {
+            runOnJS(onComplete)();
+          });
+        }
+      });
+    }
+  }, [visible, scale, opacity, onComplete]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={[styles.doubleTapHeart, animatedStyle]}>
+      <Ionicons name="heart" size={120} color="#EF4444" />
+    </Animated.View>
+  );
+};
+
+const VideoItem = memo(({ item, isActive, onFollow, height, width }) => {
   const { colors, isDark } = useTheme();
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -165,8 +200,20 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [doubleTapTimer, setDoubleTapTimer] = useState(null);
   const [commentCount, setCommentCount] = useState(0);
+  const [showHeart, setShowHeart] = useState(false);
 
-  React.useEffect(() => {
+  const [localVideo, setLocalVideo] = useState(item);
+  const feed = useSelector(state => state.videos.feed);
+
+  // Keep localVideo in sync with redux state
+  useEffect(() => {
+    const updated = feed.find(v => v._id === item._id);
+    if (updated) {
+      setLocalVideo(updated);
+    }
+  }, [feed, item._id]);
+
+  useEffect(() => {
     setStatus(prev => ({ ...prev, shouldPlay: isActive }));
     if (isActive) {
       api.post('/users/watch-history', { videoId: item._id, progress: 0 }).catch(() => {});
@@ -181,7 +228,10 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
     }).catch(() => {});
   }, [item._id]);
 
-  const handleLike = () => dispatch(likeVideo(item._id));
+  const handleLike = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    dispatch(likeVideo(item._id));
+  }, [dispatch, item._id]);
   
   const handleSave = async () => {
     const result = await dispatch(saveVideo(item._id));
@@ -191,14 +241,15 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
   const handleShare = async () => {
     try {
       const { data } = await api.get(`/videos/${item._id}/share`);
-      await Share.share({ message: `${data.data.title}\n${data.data.shareUrl}`, title: data.data.title });
+      const shareMessage = `${data.data.title}\nby ${data.data.creatorName}\n${data.data.shareUrl}`;
+      await Share.share({ message: shareMessage, title: data.data.title });
     } catch {
       await Share.share({ message: item.title });
     }
   };
 
   const handleComment = () => {
-    navigation.navigate('Comments', { videoId: item._id });
+    navigation.navigate('Comments', { videoId: item._id, onCommentCountUpdate: (newCount) => setCommentCount(newCount) });
   };
 
   const togglePlay = async () => {
@@ -216,7 +267,12 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
       // Double tap detected
       clearTimeout(doubleTapTimer);
       setDoubleTapTimer(null);
-      handleLike();
+      
+      // Trigger like and show heart
+      if (!localVideo.isLiked) {
+        handleLike();
+        setShowHeart(true);
+      }
     } else {
       // Single tap
       setDoubleTapTimer(setTimeout(() => {
@@ -224,6 +280,10 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
         setDoubleTapTimer(null);
       }, 300));
     }
+  };
+
+  const handleHeartComplete = () => {
+    setShowHeart(false);
   };
 
   const handleLongPress = async () => {
@@ -243,7 +303,7 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
     : 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { height, width }]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
       <TouchableOpacity 
@@ -269,6 +329,10 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
             <Ionicons name="play-circle" size={70} color="rgba(255,255,255,0.9)" />
           </View>
         )}
+        <DoubleTapHeart 
+          visible={showHeart} 
+          onComplete={handleHeartComplete} 
+        />
       </TouchableOpacity>
 
       <View style={styles.progressContainer}>
@@ -292,7 +356,7 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
         </View>
 
         <ActionButtons 
-          item={item} 
+          item={localVideo} 
           saved={saved}
           commentCount={commentCount}
           onLike={handleLike}
@@ -309,6 +373,7 @@ const VideoItem = memo(({ item, isActive, onFollow }) => {
 
 export default function VideoFeed({ videos, onEndReached, onFollow }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
 
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems.length > 0) {
@@ -316,31 +381,45 @@ export default function VideoFeed({ videos, onEndReached, onFollow }) {
     }
   }, []);
 
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
+  const viewabilityConfig = useRef({ 
+    itemVisiblePercentThreshold: 80 
+  }).current;
+
+  const renderVideoItem = useCallback(({ item, index }) => (
+    <VideoItem 
+      item={item} 
+      isActive={index === activeIndex} 
+      onFollow={onFollow} 
+      height={windowHeight} 
+      width={windowWidth} 
+    />
+  ), [activeIndex, onFollow, windowHeight, windowWidth]);
 
   return (
     <FlatList
       data={videos}
       keyExtractor={(item) => item._id}
-      renderItem={({ item, index }) => (
-        <VideoItem item={item} isActive={index === activeIndex} onFollow={onFollow} />
-      )}
+      renderItem={renderVideoItem}
       pagingEnabled
       showsVerticalScrollIndicator={false}
-      snapToInterval={SCREEN_HEIGHT}
+      snapToInterval={windowHeight}
       snapToAlignment="start"
       decelerationRate="fast"
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
-      getItemLayout={(_, index) => ({ length: SCREEN_HEIGHT, offset: SCREEN_HEIGHT * index, index })}
+      getItemLayout={(_, index) => ({ length: windowHeight, offset: windowHeight * index, index })}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={3}
+      initialNumToRender={2}
+      windowSize={5}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { height: SCREEN_HEIGHT, width: SCREEN_WIDTH, backgroundColor: '#000' },
+  container: { backgroundColor: '#000' },
   videoWrapper: { flex: 1 },
   video: { ...StyleSheet.absoluteFillObject },
   
@@ -349,6 +428,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  doubleTapHeart: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   progressContainer: {

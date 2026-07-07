@@ -94,11 +94,8 @@ export default function LoginScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          {/* <TouchableOpacity onPress={() => navigation.navigate('OTP', { email })}>
-            <Text style={styles.otpLink}>Verify OTP</Text>
-          </TouchableOpacity> */}
 
-          {/* <Text style={styles.apiHint}>API: {API_URL}</Text> */}
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
