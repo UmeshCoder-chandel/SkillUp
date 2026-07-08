@@ -29,9 +29,11 @@ export const useGoogleAuthRequest = () => {
   const androidClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
 
   console.log('[GoogleAuth] Initializing Google auth request...');
+  console.log('[GoogleAuth] Using web client ID for Android (expo-auth-session requirement)');
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: Platform.OS === 'ios' ? iosClientId : Platform.OS === 'android' ? androidClientId : webClientId,
+    // For Android, always use web client ID with expo-auth-session!
+    clientId: Platform.OS === 'ios' ? iosClientId : webClientId,
     iosClientId: iosClientId,
     androidClientId: androidClientId,
     webClientId: webClientId,
