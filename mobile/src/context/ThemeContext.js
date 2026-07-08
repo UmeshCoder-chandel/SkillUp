@@ -31,20 +31,40 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('ThemeProvider: starting loadTheme');
+    let isMounted = true;
+    
     const loadTheme = async () => {
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          console.warn('ThemeProvider: loadTheme timeout - setting isLoading to false');
+          setIsLoading(false);
+        }
+      }, 5000);
+
       try {
         const settings = await loadSettings();
         console.log('ThemeProvider: loaded settings', settings);
-        setIsDark(settings.darkMode);
+        if (isMounted) {
+          setIsDark(settings.darkMode);
+        }
       } catch (error) {
         console.error('ThemeProvider: error loading theme:', error);
-        setIsDark(defaultSettings.darkMode);
+        if (isMounted) {
+          setIsDark(defaultSettings.darkMode);
+        }
       } finally {
-        console.log('ThemeProvider: setting isLoading to false');
-        setIsLoading(false);
+        if (isMounted) {
+          console.log('ThemeProvider: setting isLoading to false');
+          setIsLoading(false);
+        }
+        clearTimeout(timeoutId);
       }
     };
     loadTheme();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const toggleTheme = async () => {

@@ -1,6 +1,10 @@
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import Constants from 'expo-constants';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+// This is required to handle the redirect back to the app
+WebBrowser.maybeCompleteAuthSession();
 
 const getEnvVar = (name) => {
   const value =
@@ -15,91 +19,59 @@ const getEnvVar = (name) => {
   return value;
 };
 
-let isConfigured = false;
-
 export const configureGoogleSignIn = () => {
-  if (isConfigured) {
-    console.log('[GoogleAuth] Already configured');
-    return;
-  }
-
-  try {
-    console.log('[GoogleAuth] Configuring Google Sign In...');
-    
-    const webClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
-    const androidClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
-    const iosClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
-
-    const config = {
-      webClientId: webClientId,
-      iosClientId: Platform.OS === 'ios' ? iosClientId : undefined,
-      androidClientId: Platform.OS === 'android' ? androidClientId : undefined,
-      offlineAccess: false,
-      scopes: ['profile', 'email'],
-    };
-
-    console.log('[GoogleAuth] Config:', JSON.stringify({ ...config, webClientId: '***' }, null, 2));
-    GoogleSignin.configure(config);
-    isConfigured = true;
-    console.log('[GoogleAuth] Google Sign In configured successfully');
-  } catch (error) {
-    console.error('[GoogleAuth] Error configuring Google Sign In:', error);
-  }
+  // No configuration needed for expo-auth-session
 };
 
-export const isGoogleAuthConfigured = () => {
-  configureGoogleSignIn();
-  return true;
+export const useGoogleAuthRequest = () => {
+  const webClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+  const iosClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
+  const androidClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
+
+  console.log('[GoogleAuth] Initializing Google auth request...');
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: Platform.OS === 'ios' ? iosClientId : Platform.OS === 'android' ? androidClientId : webClientId,
+    iosClientId: iosClientId,
+    androidClientId: androidClientId,
+    webClientId: webClientId,
+    scopes: ['openid', 'profile', 'email'],
+  });
+
+  console.log('[GoogleAuth] Google auth request initialized:', { hasRequest: !!request });
+
+  return [request, response, promptAsync];
 };
 
-export const signInWithGoogle = async () => {
-  try {
-    console.log('[GoogleAuth] Starting Google Sign In...');
-    
-    await configureGoogleSignIn();
-    
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const userInfo = await GoogleSignin.signIn();
-    
-    console.log('[GoogleAuth] User info received:', { ...userInfo, user: { ...userInfo.user, idToken: '***' } });
-    
-    if (!userInfo.idToken) {
-      throw new Error('No ID token received from Google');
-    }
-    
-    return userInfo.idToken;
-  } catch (error) {
-    console.error('[GoogleAuth] Google Sign In error:', error);
-    
-    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-      console.log('[GoogleAuth] User cancelled sign in');
-      return null;
-    } else if (error.code === statusCodes.IN_PROGRESS) {
-      console.log('[GoogleAuth] Sign in already in progress');
-      return null;
-    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      console.error('[GoogleAuth] Play services not available');
-      throw new Error('Google Play Services not available');
-    } else {
-      console.error('[GoogleAuth] Sign in failed:', error.message);
-      throw new Error(error.message || 'Google sign in failed');
-    }
+export const getGoogleIdTokenFromResponse = async (response) => {
+  console.log('[GoogleAuth] === Processing Google response ===');
+  console.log('[GoogleAuth] Response type:', response?.type);
+  
+  if (response?.type === 'success') {
+    const { id_token } = response.params;
+    console.log('[GoogleAuth] ID token received successfully');
+    return id_token;
   }
+
+  if (response?.type === 'cancel') {
+    console.log('[GoogleAuth] User cancelled Google sign-in');
+    return null;
+  }
+
+  console.error('[GoogleAuth] Google sign-in failed:', response);
+  throw new Error('Google sign-in failed');
+};
+
+export const signInWithGoogle = () => {
+  // This function is no longer used directly
+  // We use the useGoogleAuthRequest hook instead
+  return null;
 };
 
 export const signOutFromGoogle = async () => {
-  try {
-    await GoogleSignin.signOut();
-    console.log('[GoogleAuth] Signed out from Google');
-  } catch (error) {
-    console.error('[GoogleAuth] Error signing out from Google:', error);
-  }
+  console.log('[GoogleAuth] Google sign out (no action needed for expo-auth-session)');
 };
 
-// Keep these functions for backwards compatibility
-export const useGoogleAuthRequest = () => {
-  configureGoogleSignIn();
-  return [null, null, signInWithGoogle];
+export const isGoogleAuthConfigured = () => {
+  return true;
 };
-
-export const getGoogleIdTokenFromResponse = async (idToken) => idToken;

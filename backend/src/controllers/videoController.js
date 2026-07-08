@@ -116,8 +116,8 @@ exports.addComment = asyncHandler(async (req, res) => {
       relatedId: video._id,
     });
   }
-
   res.status(201).json({ success: true, data: comment });
+ 
 });
 
 exports.getComments = asyncHandler(async (req, res) => {
@@ -166,9 +166,13 @@ exports.shareVideo = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      shareUrl: `${process.env.MOBILE_URL || 'skilllearn://'}/video/${video._id}`,
+      deepLinkUrl: `${process.env.MOBILE_URL || 'skilllearn://'}/video/${video._id}`,
+      shareUrl: process.env.PUBLIC_URL 
+        ? `${process.env.PUBLIC_URL}/video/${video._id}` 
+        : `${process.env.MOBILE_URL || 'skilllearn://'}/video/${video._id}`,
       title: video.title,
       thumbnail: video.thumbnail,
+      creatorName: video.creator?.displayName || 'Creator',
     },
   });
 });

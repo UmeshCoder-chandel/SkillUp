@@ -123,24 +123,38 @@ export const googleLogin = createAsyncThunk('auth/google', async (idToken, { rej
   }
 });
 
-export const loadUser = createAsyncThunk('auth/loadUser', async () => {
+export const loadUser = createAsyncThunk('auth/loadUser', async (_, { rejectWithValue }) => {
   console.log('[AuthSlice] === Loading user from storage ===');
   
-  const token = await storage.getAccessToken();
-  if (!token) {
-    console.log('[AuthSlice] No token found in storage');
-    return null;
-  }
-  
-  console.log('[AuthSlice] Token found, verifying with server...');
+  // Create a timeout promise
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('loadUser timeout')), 10000)
+  );
+
   try {
-    const { data } = await api.get('/auth/me');
+    const token = await storage.getAccessToken();
+    if (!token) {
+      console.log('[AuthSlice] No token found in storage');
+      return null;
+    }
+    
+    console.log('[AuthSlice] Token found, verifying with server...');
+    // Race API call against timeout
+    const { data } = await Promise.race([
+      api.get('/auth/me'),
+      timeoutPromise
+    ]);
+    
     console.log('[AuthSlice] User loaded successfully:', data.data);
     return data.data;
   } catch (err) {
     console.warn('[AuthSlice] Failed to load user, clearing tokens:', err.message);
-    await storage.clearTokens();
-    return null;
+    try {
+      await storage.clearTokens();
+    } catch (clearErr) {
+      console.warn('[AuthSlice] Failed to clear tokens:', clearErr);
+    }
+    return rejectWithValue(err.message);
   }
 });
 

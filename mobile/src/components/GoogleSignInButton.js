@@ -1,16 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './UI';
 import { COLORS } from '../utils/constants';
 import { googleLogin, clearError, setAuthError } from '../store/authSlice';
-import { isGoogleAuthConfigured, signInWithGoogle } from '../services/googleAuth';
+import { useGoogleAuthRequest, getGoogleIdTokenFromResponse, isGoogleAuthConfigured } from '../services/googleAuth';
 
 export default function GoogleSignInButton({ loading }) {
   const dispatch = useDispatch();
   const configured = isGoogleAuthConfigured();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [request, response, promptAsync] = useGoogleAuthRequest();
+
+  useEffect(() => {
+    const handleResponse = async () => {
+      if (!response) return;
+
+      console.log('[GoogleSignInButton] Received response from Google auth');
+      setGoogleLoading(true);
+
+      try {
+        const idToken = await getGoogleIdTokenFromResponse(response);
+        
+        if (!idToken) {
+          console.log('[GoogleSignInButton] No ID token returned');
+          return;
+        }
+        
+        console.log('[GoogleSignInButton] Got idToken, sending to backend...');
+        const loginResult = await dispatch(googleLogin(idToken)).unwrap();
+        console.log('[GoogleSignInButton] Login successful!', loginResult);
+      } catch (error) {
+        console.error('[GoogleSignInButton] Error during Google login:', error);
+        const errorMessage = typeof error === 'string' 
+          ? error 
+          : error.message || 'Google sign-in failed';
+        
+        dispatch(setAuthError(errorMessage));
+      } finally {
+        console.log('[GoogleSignInButton] Flow complete, resetting states');
+        setGoogleLoading(false);
+      }
+    };
+
+    handleResponse();
+  }, [response, dispatch]);
 
   const handlePress = async () => {
     console.log('[GoogleSignInButton] handlePress called');
@@ -26,30 +61,20 @@ export default function GoogleSignInButton({ loading }) {
       return;
     }
 
+    if (!request) {
+      console.warn('[GoogleSignInButton] No Google auth request available');
+      dispatch(setAuthError('Google authentication is not ready yet. Please try again.'));
+      return;
+    }
+
     console.log('[GoogleSignInButton] Starting Google auth...');
     dispatch(clearError());
     setGoogleLoading(true);
     
     try {
-      const idToken = await signInWithGoogle();
-      
-      if (!idToken) {
-        console.log('[GoogleSignInButton] No ID token returned');
-        return;
-      }
-      
-      console.log('[GoogleSignInButton] Got idToken, sending to backend...');
-      const loginResult = await dispatch(googleLogin(idToken)).unwrap();
-      console.log('[GoogleSignInButton] Login successful!', loginResult);
+      await promptAsync({ useProxy: false });
     } catch (error) {
-      console.error('[GoogleSignInButton] Error during Google login:', error);
-      const errorMessage = typeof error === 'string' 
-        ? error 
-        : error.message || 'Google sign-in failed';
-      
-      dispatch(setAuthError(errorMessage));
-    } finally {
-      console.log('[GoogleSignInButton] Flow complete, resetting states');
+      console.error('[GoogleSignInButton] Error starting Google auth flow:', error);
       setGoogleLoading(false);
     }
   };
@@ -72,6 +97,7 @@ export default function GoogleSignInButton({ loading }) {
         title="Continue with Google"
         onPress={handlePress}
         loading={loading || googleLoading}
+        disabled={!request}
         variant="outline"
         style={styles.button}
         icon={<Ionicons name="logo-google" size={18} color={COLORS.primary} />}
