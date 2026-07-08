@@ -12,6 +12,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Video } from 'expo-av';
+<<<<<<< HEAD
+=======
+import * as Haptics from 'expo-haptics';
+>>>>>>> 3e1cda689924de76b07ee34648fe2db306d86de7
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -228,6 +232,10 @@ const VideoItem = memo(({ item, isActive, onFollow, height, width }) => {
   }, [item._id]);
 
   const handleLike = useCallback(() => {
+<<<<<<< HEAD
+=======
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+>>>>>>> 3e1cda689924de76b07ee34648fe2db306d86de7
     dispatch(likeVideo(item._id));
   }, [dispatch, item._id]);
   

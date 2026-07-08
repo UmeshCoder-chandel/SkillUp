@@ -19,25 +19,23 @@ const getEnvVar = (name) => {
   return value;
 };
 
-export const configureGoogleSignIn = () => {
-  // No configuration needed for expo-auth-session
-};
-
+// Custom hook that returns the auth request, response, and prompt function
 export const useGoogleAuthRequest = () => {
   const webClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
-  const iosClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
   const androidClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
+  const iosClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
 
-  console.log('[GoogleAuth] Initializing Google auth request...');
-  console.log('[GoogleAuth] Using web client ID for Android (expo-auth-session requirement)');
-
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    // For Android, always use web client ID with expo-auth-session!
-    clientId: Platform.OS === 'ios' ? iosClientId : webClientId,
-    iosClientId: iosClientId,
-    androidClientId: androidClientId,
-    webClientId: webClientId,
-    scopes: ['openid', 'profile', 'email'],
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: Platform.select({
+      ios: iosClientId,
+      android: androidClientId,
+      web: webClientId,
+      default: webClientId,
+    }),
+    androidClientId,
+    iosClientId,
+    webClientId,
+    scopes: ['profile', 'email'],
   });
 
   console.log('[GoogleAuth] Google auth request initialized:', { hasRequest: !!request });
@@ -64,16 +62,7 @@ export const getGoogleIdTokenFromResponse = async (response) => {
   throw new Error('Google sign-in failed');
 };
 
-export const signInWithGoogle = () => {
-  // This function is no longer used directly
-  // We use the useGoogleAuthRequest hook instead
-  return null;
-};
-
-export const signOutFromGoogle = async () => {
-  console.log('[GoogleAuth] Google sign out (no action needed for expo-auth-session)');
-};
-
 export const isGoogleAuthConfigured = () => {
-  return true;
+  const webClientId = getEnvVar('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+  return !!webClientId;
 };

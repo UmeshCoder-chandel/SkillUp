@@ -116,8 +116,8 @@ exports.addComment = asyncHandler(async (req, res) => {
       relatedId: video._id,
     });
   }
+
   res.status(201).json({ success: true, data: comment });
- 
 });
 
 exports.getComments = asyncHandler(async (req, res) => {

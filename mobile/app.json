@@ -28,6 +28,20 @@
     },
     "android": {
       "package": "com.skilllearn.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "skilllearn"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "splash": {
         "image": "./assets/splashscreen_logo.png",
         "resizeMode": "contain",
