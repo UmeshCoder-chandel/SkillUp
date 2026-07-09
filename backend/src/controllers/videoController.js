@@ -176,3 +176,31 @@ exports.shareVideo = asyncHandler(async (req, res) => {
     },
   });
 });
+
+exports.updateComment = asyncHandler(async (req, res) => {
+  const { text } = req.body;
+  const comment = await Comment.findById(req.params.commentId);
+  
+  if (!comment) throw ApiError(404, 'Comment not found');
+  if (comment.user.toString() !== req.user._id.toString()) {
+    throw ApiError(403, 'You can only edit your own comments');
+  }
+
+  comment.text = text;
+  await comment.save();
+  await comment.populate('user', 'name avatar');
+
+  res.json({ success: true, data: comment });
+});
+
+exports.deleteComment = asyncHandler(async (req, res) => {
+  const comment = await Comment.findById(req.params.commentId);
+  
+  if (!comment) throw ApiError(404, 'Comment not found');
+  if (comment.user.toString() !== req.user._id.toString()) {
+    throw ApiError(403, 'You can only delete your own comments');
+  }
+
+  await Comment.deleteOne({ _id: comment._id });
+  res.json({ success: true });
+});
