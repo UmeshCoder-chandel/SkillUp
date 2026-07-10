@@ -172,8 +172,11 @@ exports.updateVideo = asyncHandler(async (req, res) => {
   if (req.files?.thumbnail?.[0]) updates.thumbnail = req.files.thumbnail[0].path;
   if (req.files?.video?.[0]) updates.videoUrl = req.files.video[0].path;
 
+  const oldVideo = await Video.findById(req.params.id);
+  if (!oldVideo) throw ApiError(404, 'Video not found');
+
   const video = await Video.findByIdAndUpdate(req.params.id, updates, { new: true });
-  if (!video) throw ApiError(404, 'Video not found');
+  
   res.json({ success: true, data: video });
 });
 
