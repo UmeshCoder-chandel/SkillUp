@@ -86,7 +86,7 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
 
           <Button title="Log In" onPress={handleLogin} loading={submitting} style={styles.primaryBtn} />
-          <GoogleSignInButton loading={submitting} />
+           {/* <GoogleSignInButton loading={submitting} /> */}
 
           <TouchableOpacity style={styles.footer} onPress={() => navigation.navigate('Register')}>
             <Text style={styles.footerText}>

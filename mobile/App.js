@@ -26,13 +26,10 @@ import { lightColors } from './src/utils/constants';
 function AppContent() {
   const dispatch = useDispatch();
   const [appIsReady, setAppIsReady] = useState(false);
-  const [error, setError] = useState(null);
-  const [forceReady, setForceReady] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  const { isDark, isLoading: themeLoading, colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const authState = useSelector((s) => s.auth);
-  const authInitializing = authState?.initializing;
 
   // Load icons and user data to prepare app
   useEffect(() => {
@@ -52,83 +49,29 @@ function AppContent() {
         console.log('[App] User data load completed');
       } catch (e) {
         console.error('[App] Error preparing app:', e);
-        setError(e.message);
-        // Even if something fails, mark fonts as loaded so app can proceed
         setFontsLoaded(true);
       }
     }
     prepareApp();
   }, [dispatch]);
 
-  // Hide splash screen when everything is ready OR when forced ready
-  const hideSplash = useCallback(async () => {
-    if (appIsReady) return;
-    
-    const canHide = (!themeLoading && !authInitializing && fontsLoaded) || forceReady;
-    
-    if (canHide) {
-      console.log('[App] === Hiding splash screen ===');
-      try {
-        // Add a small delay to ensure smooth transition
-        await new Promise(resolve => setTimeout(resolve, 300));
-        await SplashScreen.hideAsync();
-        console.log('[App] Splash screen hidden successfully');
-      } catch (e) {
-        console.warn('[App] Error hiding splash screen:', e);
-      } finally {
-        setAppIsReady(true);
-      }
-    }
-  }, [themeLoading, authInitializing, fontsLoaded, appIsReady, forceReady]);
-
-  // Call hideSplash when dependencies change
+  // Hide splash screen immediately when fonts are loaded
   useEffect(() => {
-    hideSplash();
-  }, [hideSplash]);
-
-  // Force hide splash screen after multiple timeouts as fallback
-  useEffect(() => {
-    // First timeout after 5 seconds
-    const timeoutId1 = setTimeout(() => {
-      if (!appIsReady) {
-        console.warn('[App] 5s timeout - forcing ready state');
-        setForceReady(true);
-      }
-    }, 5000);
-
-    // Absolute last resort timeout at 15 seconds
-    const timeoutId2 = setTimeout(async () => {
-      if (!appIsReady) {
-        console.warn('[App] 15s absolute timeout - forcing hide');
+    async function hideSplashScreen() {
+      if (fontsLoaded && !appIsReady) {
+        console.log('[App] === Hiding splash screen ===');
         try {
           await SplashScreen.hideAsync();
+          console.log('[App] Splash screen hidden successfully');
         } catch (e) {
-          console.warn('[App] Error hiding splash screen on absolute timeout:', e);
+          console.warn('[App] Error hiding splash screen:', e);
         } finally {
           setAppIsReady(true);
         }
       }
-    }, 15000);
-
-    return () => {
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-    };
-  }, [appIsReady]);
-
-  // Show error screen if critical error
-  if (error && appIsReady) {
-    return (
-      <View style={{ flex: 1, backgroundColor: lightColors.background, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: lightColors.error, fontSize: 18, textAlign: 'center', marginBottom: 20 }}>
-          {error}
-        </Text>
-        <Text style={{ color: lightColors.text, fontSize: 14, textAlign: 'center' }}>
-          Please restart the app
-        </Text>
-      </View>
-    );
-  }
+    }
+    hideSplashScreen();
+  }, [fontsLoaded, appIsReady]);
 
   if (!appIsReady) {
     console.log('[App] Rendering loading state');

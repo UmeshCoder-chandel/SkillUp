@@ -80,7 +80,7 @@ export default function RegisterScreen({ navigation }) {
           />
 
           <Button title="Create account" onPress={handleRegister} loading={loading} style={styles.primaryBtn} />
-          <GoogleSignInButton loading={loading} />
+          {/* <GoogleSignInButton loading={loading} /> */}
 
           <TouchableOpacity style={styles.footer} onPress={() => navigation.goBack()}>
             <Text style={styles.footerText}>

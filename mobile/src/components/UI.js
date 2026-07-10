@@ -51,10 +51,17 @@ export const Button = ({
     textStyle,
   ];
 
+  const handlePress = () => {
+    console.log('[Button] Pressed!', { title, disabled, loading, onPress: !!onPress });
+    if (onPress) {
+      onPress();
+    }
+  };
+
   return (
     <TouchableOpacity
       style={buttonStyles}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={loading || disabled}
       activeOpacity={0.85}
     >
@@ -81,6 +88,7 @@ export const IconInput = ({ icon, style, secureTextEntry, ...props }) => {
         style={[styles.iconInput, { color: colors.text }]}
         placeholderTextColor={colors.textSecondary}
         secureTextEntry={secureTextEntry && !isPasswordVisible}
+        numberOfLines={1}
         {...props}
       />
       {secureTextEntry && (
@@ -105,6 +113,7 @@ export const Input = ({ label, ...props }) => {
       <TextInput
         style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
         placeholderTextColor={colors.textSecondary}
+        numberOfLines={1}
         {...props}
       />
     </View>

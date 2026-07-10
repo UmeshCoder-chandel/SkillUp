@@ -67,11 +67,11 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.pills}>
             <View style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Ionicons name="flame" size={16} color={colors.streak} />
-              <Text style={[styles.pillText, { color: colors.text }]}>0</Text>
+              <Text style={[styles.pillText, { color: colors.text }]}>{user?.dayStreak || 0}</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Ionicons name="flash" size={16} color={colors.xp} />
-              <Text style={[styles.pillText, { color: colors.text }]}>0 XP</Text>
+              <Text style={[styles.pillText, { color: colors.text }]}>{user?.xp || 0} XP</Text>
             </View>
           </View>
         </View>

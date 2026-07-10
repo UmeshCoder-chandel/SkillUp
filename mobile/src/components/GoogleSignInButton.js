@@ -49,6 +49,7 @@ export default function GoogleSignInButton({ loading }) {
 
   const handlePress = async () => {
     console.log('[GoogleSignInButton] handlePress called');
+    console.log('[GoogleSignInButton] State:', { configured, googleLoading, loading, request: !!request, requestUrl: request?.url });
     
     if (!configured) {
       console.warn('[GoogleSignInButton] Google auth not configured');
@@ -72,7 +73,9 @@ export default function GoogleSignInButton({ loading }) {
     setGoogleLoading(true);
     
     try {
-      await promptAsync({ useProxy: false });
+      console.log('[GoogleSignInButton] Calling promptAsync with useProxy:', __DEV__);
+      const result = await promptAsync({ useProxy: __DEV__ });
+      console.log('[GoogleSignInButton] promptAsync result:', result);
     } catch (error) {
       console.error('[GoogleSignInButton] Error starting Google auth flow:', error);
       setGoogleLoading(false);

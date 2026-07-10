@@ -8,9 +8,9 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://skillup-dwny.onrender.com/api", 
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "922334979850-tea7g0dtp9em95i6rt5ugfiks95356hi.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "922334979850-aefgpkep0bcia9hl2o14g8sm2pus2hnn.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "922334979850-dhiiqif44arcqjp360a51e9020bbskqc.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "743456703759-e9kv8khhep5v9osapi5jb48plj3l5ueo.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "743456703759-kneseakglqfheh0al6jm52gcdv08a2dr.apps.googleusercontent.com",                                                             
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "743456703759-a4o1kb1qthqesu23v2ir998pdthngok0.apps.googleusercontent.com"            
       }
     },
     "preview": {
@@ -20,10 +20,10 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://skillup-dwny.onrender.com/api",
-     "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "922334979850-tea7g0dtp9em95i6rt5ugfiks95356hi.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "922334979850-aefgpkep0bcia9hl2o14g8sm2pus2hnn.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "922334979850-dhiiqif44arcqjp360a51e9020bbskqc.apps.googleusercontent.com"
-      }
+     "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "743456703759-e9kv8khhep5v9osapi5jb48plj3l5ueo.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "743456703759-kneseakglqfheh0al6jm52gcdv08a2dr.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "743456703759-a4o1kb1qthqesu23v2ir998pdthngok0.apps.googleusercontent.com"        
+      }                              
     },
     "production": {
       "android": {
@@ -31,9 +31,9 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://skillup-dwny.onrender.com/api",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "922334979850-tea7g0dtp9em95i6rt5ugfiks95356hi.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "922334979850-aefgpkep0bcia9hl2o14g8sm2pus2hnn.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "922334979850-dhiiqif44arcqjp360a51e9020bbskqc.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "743456703759-e9kv8khhep5v9osapi5jb48plj3l5ueo.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "743456703759-kneseakglqfheh0al6jm52gcdv08a2dr.apps.googleusercontent.com",
+      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "743456703759-a4o1kb1qthqesu23v2ir998pdthngok0.apps.googleusercontent.com"
       }
     }
   },
