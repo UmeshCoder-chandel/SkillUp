@@ -273,15 +273,36 @@ exports.approveCreatorRequest = asyncHandler(async (req, res) => {
   user.role = 'creator';
   await user.save();
 
-  // Create Creator document
+  // Create Creator document with approvalStatus set to 'Approved'
   const creator = await Creator.create({
     userId: user._id,
     displayName: user.name,
     bio: user.bio,
-    avatar: user.avatar
+    avatar: user.avatar,
+    approvalStatus: 'Approved'
   });
 
   res.json({ success: true, message: 'Creator request approved', data: { user, creator } });
+});
+
+exports.approveCreator = asyncHandler(async (req, res) => {
+  const creator = await Creator.findById(req.params.id);
+  if (!creator) throw ApiError(404, 'Creator not found');
+
+  creator.approvalStatus = 'Approved';
+  await creator.save();
+
+  res.json({ success: true, message: 'Creator approved', data: creator });
+});
+
+exports.rejectCreator = asyncHandler(async (req, res) => {
+  const creator = await Creator.findById(req.params.id);
+  if (!creator) throw ApiError(404, 'Creator not found');
+
+  creator.approvalStatus = 'Rejected';
+  await creator.save();
+
+  res.json({ success: true, message: 'Creator rejected', data: creator });
 });
 
 exports.rejectCreatorRequest = asyncHandler(async (req, res) => {

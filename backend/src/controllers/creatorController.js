@@ -104,6 +104,9 @@ exports.becomeCreator = asyncHandler(async (req, res) => {
 exports.uploadVideo = asyncHandler(async (req, res) => {
   const creator = await Creator.findOne({ userId: req.user._id });
   if (!creator) throw ApiError(403, 'Only creators can upload videos');
+  if (creator.approvalStatus !== 'Approved') {
+    throw ApiError(403, 'Your creator account is awaiting admin approval.');
+  }
 
   const { title, description, category, duration, tags } = req.body;
 

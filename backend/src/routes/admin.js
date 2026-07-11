@@ -50,6 +50,8 @@ router.put('/creator-requests/:id/reject', adminController.rejectCreatorRequest)
 
 router.get('/creators', adminController.getCreators);
 router.put('/creators/:id', adminController.updateCreator);
+router.put('/creators/:id/approve', adminController.approveCreator);
+router.put('/creators/:id/reject', adminController.rejectCreator);
 router.delete('/creators/:id', adminController.deleteCreator);
 
 router.get('/categories', categoryController.getCategories);

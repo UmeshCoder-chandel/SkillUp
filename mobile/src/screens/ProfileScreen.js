@@ -146,12 +146,28 @@ export default function ProfileScreen() {
         </View>
 
         {isCreator ? (
-          <Button
-            title="Upload Video"
-            onPress={() => navigation.navigate('UploadVideo')}
-            icon={<Ionicons name="cloud-upload-outline" size={18} color="#fff" />}
-            style={styles.uploadButton}
-          />
+          <>
+            {creator?.approvalStatus === 'Pending' && (
+              <View style={[styles.pendingRequestContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Ionicons name="time-outline" size={20} color={colors.primary} />
+                <Text style={[styles.pendingRequestText, { color: colors.primary }]}>Creator account pending approval</Text>
+              </View>
+            )}
+            {creator?.approvalStatus === 'Rejected' && (
+              <View style={[styles.pendingRequestContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+                <Ionicons name="close-circle-outline" size={20} color={colors.error} />
+                <Text style={[styles.pendingRequestText, { color: colors.error }]}>Creator request rejected</Text>
+              </View>
+            )}
+            {creator?.approvalStatus === 'Approved' && (
+              <Button
+                title="Upload Video"
+                onPress={() => navigation.navigate('UploadVideo')}
+                icon={<Ionicons name="cloud-upload-outline" size={18} color="#fff" />}
+                style={styles.uploadButton}
+              />
+            )}
+          </>
         ) : hasPendingRequest ? (
           <View style={[styles.pendingRequestContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Ionicons name="time-outline" size={20} color={colors.primary} />

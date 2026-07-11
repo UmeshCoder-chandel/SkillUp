@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Video } from 'expo-av';
+import { useSelector } from 'react-redux';
 import api from '../services/api';
 import { Button, IconInput, ScreenHeader } from '../components/UI';
 import { formatCount } from '../utils/constants';
@@ -21,6 +22,7 @@ import { useTheme as useAppTheme } from '../context/ThemeContext';
 
 export default function UploadVideoScreen({ navigation }) {
   const { colors, isDark } = useAppTheme();
+  const { user } = useSelector(state => state.auth);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -28,10 +30,30 @@ export default function UploadVideoScreen({ navigation }) {
   const [videoUri, setVideoUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [creator, setCreator] = useState(null);
+  const [isApproved, setIsApproved] = useState(false);
+  const [fetchingCreator, setFetchingCreator] = useState(true);
+
+  const loadCreator = async () => {
+    try {
+      setFetchingCreator(true);
+      const { data } = await api.get('/creators');
+      const found = (data.data || []).find(c => c.userId._id === user?._id || c.userId === user?._id);
+      setCreator(found);
+      setIsApproved(found?.approvalStatus === 'Approved');
+    } catch (error) {
+      console.error('Failed to load creator:', error);
+      setCreator(null);
+      setIsApproved(false);
+    } finally {
+      setFetchingCreator(false);
+    }
+  };
 
   useEffect(() => {
     loadCategories();
-  }, []);
+    loadCreator();
+  }, [user]);
 
   const loadCategories = async () => {
     try {
@@ -129,76 +151,95 @@ export default function UploadVideoScreen({ navigation }) {
             <View style={{ width: 40 }} />
           </View>
 
-          <View style={styles.mediaSection}>
-            <TouchableOpacity onPress={pickVideo} style={styles.mediaBox}>
-              {videoUri ? (
-                <Video
-                  source={{ uri: videoUri }}
-                  style={styles.mediaImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.mediaPlaceholder}>
-                  <Ionicons name="videocam-outline" size={40} color={colors.textSecondary} />
-                  <Text style={[styles.mediaText, { color: colors.textSecondary }]}>
-                    Select Video
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.form}>
-            <IconInput
-              icon="create-outline"
-              label="Title"
-              placeholder="Enter video title"
-              value={title}
-              onChangeText={setTitle}
-            />
-            <IconInput
-              icon="document-text-outline"
-              label="Description"
-              placeholder="Enter video description"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              style={{ height: 100, textAlignVertical: 'top' }}
-            />
-
-            <Text style={[styles.categoryLabel, { color: colors.text }]}>
-              Category
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryOptions}>
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat._id}
-                  style={[
-                    styles.categoryOption, { backgroundColor: colors.card, borderColor: colors.border },
-                    category === cat._id && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
-                  ]}
-                  onPress={() => setCategory(cat._id)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      { color: category === cat._id ? colors.primary : colors.text }
-                    ]}
-                  >
-                    {cat.title}
-                  </Text>
+          {fetchingCreator ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={{ color: colors.text, marginTop: 8 }}>Checking access...</Text>
+            </View>
+          ) : !isApproved ? (
+            <View style={styles.notApprovedContainer}>
+              <Ionicons name="warning-outline" size={48} color={colors.warning || '#FFD700'} />
+              <Text style={[styles.notApprovedTitle, { color: colors.text }]}>
+                Creator Account Pending Approval
+              </Text>
+              <Text style={[styles.notApprovedText, { color: colors.textSecondary }]}>
+                Your creator account is currently awaiting admin approval. You will be able to upload videos once your account is approved.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.mediaSection}>
+                <TouchableOpacity onPress={pickVideo} style={styles.mediaBox}>
+                  {videoUri ? (
+                    <Video
+                      source={{ uri: videoUri }}
+                      style={styles.mediaImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.mediaPlaceholder}>
+                      <Ionicons name="videocam-outline" size={40} color={colors.textSecondary} />
+                      <Text style={[styles.mediaText, { color: colors.textSecondary }]}>
+                        Select Video
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+              </View>
 
-          <Button
-            title={loading ? `Uploading ${uploadProgress}%` : 'Upload Video'}
-            onPress={handleUpload}
-            loading={loading}
-            disabled={loading || !videoUri || !title || !category}
-          />
+              <View style={styles.form}>
+                <IconInput
+                  icon="create-outline"
+                  label="Title"
+                  placeholder="Enter video title"
+                  value={title}
+                  onChangeText={setTitle}
+                />
+                <IconInput
+                  icon="document-text-outline"
+                  label="Description"
+                  placeholder="Enter video description"
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={4}
+                  style={{ height: 100, textAlignVertical: 'top' }}
+                />
+
+                <Text style={[styles.categoryLabel, { color: colors.text }]}>
+                  Category
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryOptions}>
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat._id}
+                      style={[
+                        styles.categoryOption, { backgroundColor: colors.card, borderColor: colors.border },
+                        category === cat._id && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+                      ]}
+                      onPress={() => setCategory(cat._id)}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryText,
+                          { color: category === cat._id ? colors.primary : colors.text }
+                        ]}
+                      >
+                        {cat.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <Button
+                title={loading ? `Uploading ${uploadProgress}%` : 'Upload Video'}
+                onPress={handleUpload}
+                loading={loading}
+                disabled={loading || !videoUri || !title || !category}
+              />
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -212,6 +253,10 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, paddingBottom: 16 },
   backButton: { width: 40, height: 40, justifyContent: 'center' },
   headerTitle: { fontSize: 24, fontWeight: '800' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
+  notApprovedContainer: { padding: 24, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 40 },
+  notApprovedTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center', marginTop: 16, marginBottom: 8 },
+  notApprovedText: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
   mediaSection: { marginBottom: 28 },
   mediaBox: { aspectRatio: 16/9, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   mediaImage: { width: '100%', height: '100%' },

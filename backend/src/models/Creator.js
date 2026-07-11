@@ -11,6 +11,11 @@ const creatorSchema = new mongoose.Schema(
     totalVideos: { type: Number, default: 0 },
     isVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    approvalStatus: { 
+      type: String, 
+      enum: ['Pending', 'Approved', 'Rejected'], 
+      default: 'Approved' 
+    },
   },
   { timestamps: true }
 );
