@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -11,12 +11,9 @@ export default function SavedVideosScreen() {
   const { colors } = useTheme();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadSavedVideos();
-  }, []);
-
-  const loadSavedVideos = async () => {
+  const loadSavedVideos = useCallback(async () => {
     try {
       const { data } = await api.get('/users/saved');
       setVideos(data.data);
@@ -25,7 +22,17 @@ export default function SavedVideosScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadSavedVideos();
+    setRefreshing(false);
+  }, [loadSavedVideos]);
+
+  useEffect(() => {
+    loadSavedVideos();
+  }, [loadSavedVideos]);
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -49,7 +56,18 @@ export default function SavedVideosScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scroll} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         {loading ? (
           <View style={styles.center}>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Loading...</Text>

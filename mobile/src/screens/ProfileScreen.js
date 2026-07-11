@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,13 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { logoutUser } from '../store/authSlice';
+import { logoutUser, loadUser } from '../store/authSlice';
 import api from '../services/api';
 import { Button } from '../components/UI';
 import { BADGES } from '../utils/constants';
@@ -26,35 +27,55 @@ export default function ProfileScreen() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [creator, setCreator] = useState(null);
   const [requestingCreator, setRequestingCreator] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    api.get('/users/profile').then(({ data }) => setProfile(data.data)).catch(() => {});
-    api.get('/creators').then(({ data }) => {
-      const list = (data.data || []).slice(0, 5).map((c, i) => ({
+  const loadProfileData = useCallback(async () => {
+    try {
+      const [profileRes, creatorsRes] = await Promise.all([
+        api.get('/users/profile'),
+        api.get('/creators'),
+      ]);
+      const profileData = profileRes.data.data;
+      setProfile(profileData);
+      
+      const list = (creatorsRes.data.data || []).slice(0, 5).map((c, i) => ({
         rank: i + 1,
         name: c.displayName,
         xp: c.totalVideos * 10 || 0,
         avatar: c.avatar,
         isMe: false,
       }));
+      
+      // Add current user to leaderboard
       list.push({
         rank: list.length + 1,
         name: user?.name || 'You',
-        xp: profile?.user?.xp || 0,
+        xp: profileData?.user?.xp || 0,
         avatar: user?.avatar,
         isMe: true,
       });
+      
       setLeaderboard(list.sort((a, b) => b.xp - a.xp).map((item, i) => ({ ...item, rank: i + 1 })));
-    }).catch(() => {});
+      
+      const found = (creatorsRes.data.data || []).find(c => c.userId?._id?.toString() === user?._id?.toString());
+      setCreator(found || null);
+    } catch {
+      // Ignore errors
+    }
+  }, [user]);
 
-    // Check if user is a creator
-    api.get('/creators')
-      .then(({ data }) => {
-        const found = (data.data || []).find(c => c.userId?._id?.toString() === user?._id?.toString());
-        setCreator(found || null);
-      })
-      .catch(() => {});
-  }, [user?.name, user?.avatar, user?._id, profile]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      dispatch(loadUser()),
+      loadProfileData(),
+    ]);
+    setRefreshing(false);
+  }, [dispatch, loadProfileData]);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   const savedCount = profile?.user?.savedVideos?.length || 0;
   const topicsCount = profile?.playlists?.length || 0;
@@ -84,7 +105,18 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View style={styles.appBar}>
           <View />
           <TouchableOpacity

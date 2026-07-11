@@ -10,6 +10,7 @@ import {
   StatusBar,
   GestureResponderEvent,
   useWindowDimensions,
+  RefreshControl,
 } from 'react-native';
 import { Video } from 'expo-av';
 import Animated, {
@@ -369,7 +370,7 @@ const VideoItem = memo(({ item, isActive, onFollow, height, width }) => {
   );
 });
 
-export default function VideoFeed({ videos, onEndReached, onFollow }) {
+export default function VideoFeed({ videos, onEndReached, onFollow, refreshing, onRefresh, colors }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
 
@@ -412,6 +413,16 @@ export default function VideoFeed({ videos, onEndReached, onFollow }) {
       maxToRenderPerBatch={3}
       initialNumToRender={2}
       windowSize={5}
+      refreshControl={
+        (refreshing !== undefined && onRefresh) ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={colors ? [colors.primary] : undefined}
+            tintColor={colors ? colors.primary : undefined}
+          />
+        ) : null
+      }
     />
   );
 }

@@ -82,20 +82,23 @@ exports.followCreator = asyncHandler(async (req, res) => {
 });
 
 exports.becomeCreator = asyncHandler(async (req, res) => {
-  const existing = await Creator.findOne({ userId: req.user._id });
-  if (existing) throw ApiError(400, 'Already a creator');
+  const user = await User.findById(req.user._id);
+  
+  // Check if already a creator or already has a pending request
+  if (user.role === 'creator') throw ApiError(400, 'You are already a creator');
+  if (user.creatorRequest.status === 'pending') throw ApiError(400, 'Your request is already pending');
 
   const { displayName, bio } = req.body;
-  const creator = await Creator.create({
-    userId: req.user._id,
-    displayName: displayName || req.user.name,
-    bio: bio || '',
-    avatar: req.user.avatar || '',
-  });
 
-  await User.findByIdAndUpdate(req.user._id, { role: 'creator' });
+  user.creatorRequest = {
+    status: 'pending',
+    requestedAt: new Date(),
+    notes: (bio || displayName) ? `${displayName ? 'Display Name: ' + displayName : ''}${bio ? (displayName ? ', ' : '') + 'Bio: ' + bio : ''}` : ''
+  };
 
-  res.status(201).json({ success: true, data: creator });
+  await user.save();
+  
+  res.status(201).json({ success: true, message: 'Creator request submitted successfully', data: user.toPublicJSON() });
 });
 
 exports.uploadVideo = asyncHandler(async (req, res) => {

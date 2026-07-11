@@ -1,16 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 
 export default function DashboardScreen() {
   const [data, setData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
 
-  useEffect(() => {
-    api.get('/users/dashboard').then(({ data: res }) => setData(res.data)).catch(() => {});
+  const loadData = useCallback(async () => {
+    try {
+      const { data: res } = await api.get('/users/dashboard');
+      setData(res.data);
+    } catch {
+      // Ignore errors
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const VideoCard = ({ video }) => (
     <TouchableOpacity style={styles.videoCard}>
@@ -22,7 +38,17 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <Text style={[styles.header, { color: colors.text }]}>Learning Dashboard</Text>
 
         <Text style={[styles.section, { color: colors.primary }]}>Continue Learning</Text>

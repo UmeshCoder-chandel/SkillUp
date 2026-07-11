@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,11 +25,21 @@ export default function HomeScreen({ navigation }) {
   const { feed, loading, loadingMore, pagination } = useSelector((s) => s.videos);
   const { list: categories } = useSelector((s) => s.categories);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchFeed({ page: 1 }));
   }, [dispatch]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      dispatch(fetchCategories()),
+      dispatch(fetchFeed({ page: 1, category: selectedCategory })),
+    ]);
+    setRefreshing(false);
+  }, [dispatch, selectedCategory]);
 
   const loadCategory = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -58,6 +69,14 @@ export default function HomeScreen({ navigation }) {
           if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 120) loadMore();
         }}
         scrollEventThrottle={400}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         <View style={styles.header}>
           <View>

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useCallback, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCategories } from '../store/categorySlice';
@@ -24,6 +24,13 @@ export default function CategoriesScreen({ navigation }) {
   const dispatch = useDispatch();
   const { colors } = useTheme();
   const { list, loading } = useSelector((s) => s.categories);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await dispatch(fetchCategories());
+    setRefreshing(false);
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -37,6 +44,14 @@ export default function CategoriesScreen({ navigation }) {
         keyExtractor={(item) => item._id}
         numColumns={2}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.card, { backgroundColor: colors.surface }]}
